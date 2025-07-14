@@ -1,0 +1,43 @@
+{
+  "name": "real-estate-cli",
+  "version": "1.0.0",
+  "description": "Command-line real estate search tool",
+  "main": "dist/index.js",
+  "packageManager": "pnpm@8.0.0",
+  "bin": {
+    "real-estate-search": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "clean": "rimraf dist",
+    "install:pnpm": "pnpm install",
+    "install:npm": "npm install"
+  },
+  "keywords": [
+    "real-estate",
+    "cli",
+    "property-search"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.3",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^17.2.0",
+    "inquirer": "^9.2.12",
+    "lodash": "^4.17.21",
+    "ora": "^5.4.1",
+    "rimraf": "^5.0.5"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.10.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
+}
