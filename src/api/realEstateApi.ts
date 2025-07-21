@@ -68,7 +68,7 @@ export class RealEstateApiClient {
 
       // If no results from real APIs, fall back to mock data
       if (results.length === 0) {
-        console.log(chalk.yellow('No results from APIs, using mock data.'));
+        console.log(chalk.yellow('⚠️  No results from APIs, using mock data.'));
         return this.generateMockProperties(criteria, 'MockAPI');
       }
 
@@ -115,29 +115,43 @@ export class RealEstateApiClient {
         `/acts/${config.api.apify.actorId}/runs/${runId}/dataset/items`
       );
 
-      return this.transformApifyResults(resultsResponse.data, criteria);
+      const transformedResults = this.transformApifyResults(resultsResponse.data, criteria);
+
+      return transformedResults;
     } catch (error) {
-      console.warn('Apify API error, falling back to mock data:', error);
+      console.warn('Apify API error, falling back to mock data:', error instanceof Error ? error.message : String(error));
       return this.generateMockProperties(criteria, 'Apify');
     }
   }
 
   private async searchZillow(criteria: SearchCriteria): Promise<Property[]> {
     try {
-      // Note: This is a simplified example. Actual Zillow API implementation would be more complex
+      console.log(chalk.blue('🔍 Attempting Zillow API call...'));
+      
+      // Build search parameters - use only location and price range for better results
+      const searchParams: any = {
+        location: `${criteria.city}, ${criteria.state || ''}`
+      };
+      
+      // Only add price filters if they exist
+      if (criteria.minPrice) searchParams.minPrice = criteria.minPrice;
+      if (criteria.maxPrice) searchParams.maxPrice = criteria.maxPrice;
+      
+      // Add property type only if it's not 'any'
+      if (criteria.propertyType !== 'any') {
+        searchParams.home_type = this.mapPropertyTypeToZillow(criteria.propertyType);
+      }
+      
+      console.log(chalk.gray(`Search params: ${JSON.stringify(searchParams)}`));
+      
       const response = await this.zillowClient.get('/propertyExtendedSearch', {
-        params: {
-          location: `${criteria.city}, ${criteria.state || ''}`,
-          home_type: this.mapPropertyTypeToZillow(criteria.propertyType),
-          minPrice: criteria.minPrice,
-          maxPrice: criteria.maxPrice,
-          bedrooms: criteria.bedrooms,
-          bathrooms: criteria.bathrooms
-        }
+        params: searchParams
       });
 
+      console.log(chalk.green(`✅ Zillow API success! Found ${response.data.props?.length || 0} properties`));
       return this.transformZillowResults(response.data, criteria);
     } catch (error) {
+      console.log(chalk.red(`❌ Zillow API failed: ${error instanceof Error ? error.message : String(error)}`));
       console.warn('Zillow API error, using mock data:', error);
       return this.generateMockProperties(criteria, 'Zillow');
     }
@@ -214,23 +228,24 @@ export class RealEstateApiClient {
 
   private transformZillowResults(data: any, criteria: SearchCriteria): Property[] {
     // Transform Zillow API results to our Property format
-    return (data.results || []).map((item: any) => ({
+    // Real Zillow API returns data in 'props' array, not 'results'
+    return (data.props || []).map((item: any) => ({
       id: `zillow-${item.zpid}`,
-      address: item.address?.streetAddress,
-      city: item.address?.city || criteria.city,
-      state: item.address?.state || criteria.state,
-      zipCode: item.address?.zipcode,
-      price: item.price || item.zestimate,
-      bedrooms: item.bedrooms,
-      bathrooms: item.bathrooms,
-      squareFootage: item.livingArea,
+      address: item.address || `Property ${item.zpid}`,
+      city: criteria.city,
+      state: criteria.state || 'OH',
+      zipCode: item.address?.match(/(\d{5})/) ? item.address.match(/(\d{5})/)[1] : '43215',
+      price: item.price || item.zestimate || 0,
+      bedrooms: item.bedrooms || 0,
+      bathrooms: item.bathrooms || 0,
+      squareFootage: item.livingArea || 0,
       propertyType: criteria.propertyType,
-      description: item.description || `Property in ${criteria.city}`,
+      description: `${item.propertyType || 'Property'} in ${criteria.city}`,
       features: this.extractZillowFeatures(item),
       imageUrls: item.imgSrc ? [item.imgSrc] : [],
-      listingUrl: item.detailUrl,
+      listingUrl: item.detailUrl ? `https://www.zillow.com${item.detailUrl}` : `https://www.zillow.com/homedetails/${item.zpid}_zpid/`,
       source: 'Zillow',
-      dateAdded: new Date(item.datePosted || Date.now())
+      dateAdded: new Date()
     }));
   }
 

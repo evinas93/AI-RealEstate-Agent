@@ -1,6 +1,0 @@
-ID,Address,City,State,Zip Code,Price,Bedrooms,Bathrooms,Square Footage,Property Type,Features,Listing URL,Source,Date Added,Match Score
-mockapi-4,3687 Main St,cleveland,ohio,26511,3407,4,2,1655,apartment,Fireplace; Balcony,https://www.rentals.com/details/3687-main-st-cleveland-ohio-63294/ja55781cx4,MockAPI,2025-06-23T01:26:12.971Z,104
-mockapi-3,9317 Park Way,cleveland,ohio,53044,3051,5,2,1047,apartment,Fireplace,https://www.rent.com/property/9317-park-way-cleveland-ohio-52950/p0vdr6vcwsb,MockAPI,2025-07-02T02:24:48.351Z,99
-mockapi-5,5084 Cedar Blvd,cleveland,ohio,26334,4237,5,3,2633,apartment,Fireplace; Gym,https://www.rentals.com/details/5084-cedar-blvd-cleveland-ohio-42986/t5g1xc7wkz,MockAPI,2025-07-07T03:35:37.765Z,95
-mockapi-2,8548 Pine Rd,cleveland,ohio,62298,2226,4,2,2392,apartment,Fireplace,https://www.rentals.com/details/8548-pine-rd-cleveland-ohio-48703/4yyjxjpiqbk,MockAPI,2025-07-11T03:49:11.441Z,93
-mockapi-1,1160 Cedar Blvd,cleveland,ohio,19129,2585,4,2,2686,apartment,Fireplace,https://www.padmapper.com/apartments/1160-cedar-blvd-cleveland-ohio-19246/d44bb309rme,MockAPI,2025-06-22T16:14:39.545Z,93

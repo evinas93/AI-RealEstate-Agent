@@ -48,7 +48,7 @@ class Config {
         baseUrl: 'https://api.apify.com/v2'
       },
       zillow: {
-        apiKey: process.env.ZILLOW_API_KEY || '',
+        apiKey: process.env.RAPIDAPI_KEY || '',
         apiHost: process.env.ZILLOW_API_HOST || 'zillow-com1.p.rapidapi.com'
       },
       rentberry: {
@@ -81,7 +81,8 @@ class Config {
   }
 
   public hasValidApifyConfig(): boolean {
-    return !!this.api.apify.apiToken;
+    // Disabled - using only RapidAPI
+    return false;
   }
 
   public hasValidZillowConfig(): boolean {
