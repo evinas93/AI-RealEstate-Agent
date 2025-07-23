@@ -45,6 +45,7 @@ export class ExportUtils {
         { id: 'city', title: 'City' },
         { id: 'state', title: 'State' },
         { id: 'zipCode', title: 'Zip Code' },
+        { id: 'listingType', title: 'Listing Type' },
         { id: 'price', title: 'Price' },
         { id: 'bedrooms', title: 'Bedrooms' },
         { id: 'bathrooms', title: 'Bathrooms' },

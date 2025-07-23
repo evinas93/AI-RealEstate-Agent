@@ -1,6 +1,6 @@
 import Table from 'cli-table3';
 import chalk from 'chalk';
-import { Property } from '../types/property';
+import { Property, ListingType } from '../types/property';
 
 export class DisplayUtils {
   displayProperties(properties: Property[], limit: number = 10): void {
@@ -19,19 +19,26 @@ export class DisplayUtils {
         chalk.cyan('Price'),
         chalk.cyan('Bed/Bath'),
         chalk.cyan('Type'),
+        chalk.cyan('Listing'),
         chalk.cyan('Score'),
         chalk.cyan('Source')
       ],
-      colWidths: [30, 12, 10, 12, 8, 10],
+      colWidths: [28, 12, 10, 10, 8, 8, 10],
       wordWrap: true
     });
 
     displayProperties.forEach(property => {
+      const listingTypeDisplay = property.listingType === ListingType.RENT ? 'Rent' : 'Buy';
+      const priceDisplay = property.listingType === ListingType.RENT 
+        ? `$${property.price.toLocaleString()}/mo` 
+        : `$${property.price.toLocaleString()}`;
+      
       table.push([
         `${property.address}\n${property.city}, ${property.state}`,
-        chalk.green(`$${property.price.toLocaleString()}`),
+        chalk.green(priceDisplay),
         `${property.bedrooms}/${property.bathrooms}`,
         property.propertyType,
+        chalk.blue(listingTypeDisplay),
         property.score ? chalk.yellow(property.score.toString()) : 'N/A',
         property.source
       ]);
@@ -50,7 +57,14 @@ export class DisplayUtils {
     console.log(chalk.blue('='.repeat(60)));
     
     console.log(`📍 Location: ${property.city}, ${property.state} ${property.zipCode}`);
-    console.log(`💰 Price: ${chalk.green('$' + property.price.toLocaleString())}`);
+    
+    const listingTypeDisplay = property.listingType === ListingType.RENT ? 'For Rent' : 'For Sale';
+    const priceDisplay = property.listingType === ListingType.RENT 
+      ? `$${property.price.toLocaleString()}/month` 
+      : `$${property.price.toLocaleString()}`;
+    
+    console.log(`🏠 Listing Type: ${chalk.blue(listingTypeDisplay)}`);
+    console.log(`💰 Price: ${chalk.green(priceDisplay)}`);
     console.log(`🛏️  Bedrooms: ${property.bedrooms}`);
     console.log(`🚿 Bathrooms: ${property.bathrooms}`);
     if (property.squareFootage) {

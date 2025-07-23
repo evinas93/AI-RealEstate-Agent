@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import { SearchCriteria, PropertyType } from '../types/property';
+import { SearchCriteria, PropertyType, ListingType } from '../types/property';
 
 export class CliPrompts {
   async getSearchCriteria(): Promise<SearchCriteria> {
@@ -19,6 +19,16 @@ export class CliPrompts {
       },
       {
         type: 'list',
+        name: 'listingType',
+        message: 'Are you looking to rent or buy?',
+        choices: [
+          { name: '🏠 Buy', value: ListingType.BUY },
+          { name: '🏠 Rent', value: ListingType.RENT },
+          { name: '🔍 Any (both rent and buy)', value: ListingType.ANY }
+        ]
+      },
+      {
+        type: 'list',
         name: 'propertyType',
         message: 'Select property type:',
         choices: [
@@ -32,13 +42,17 @@ export class CliPrompts {
       {
         type: 'number',
         name: 'minPrice',
-        message: 'Minimum price (optional):',
+        message: (answers: any) => answers.listingType === ListingType.RENT 
+          ? 'Minimum monthly rent (optional):' 
+          : 'Minimum price (optional):',
         validate: (input: number) => !input || input > 0 || 'Price must be positive'
       },
       {
         type: 'number',
         name: 'maxPrice',
-        message: 'Maximum price (optional):',
+        message: (answers: any) => answers.listingType === ListingType.RENT 
+          ? 'Maximum monthly rent (optional):' 
+          : 'Maximum price (optional):',
         validate: (input: number) => !input || input > 0 || 'Price must be positive'
       },
       {
@@ -75,6 +89,7 @@ export class CliPrompts {
     return {
       city: answers.city.trim(),
       state: answers.state?.trim() || undefined,
+      listingType: answers.listingType,
       propertyType: answers.propertyType,
       minPrice: answers.minPrice || undefined,
       maxPrice: answers.maxPrice || undefined,
@@ -128,9 +143,12 @@ export class CliPrompts {
   async confirmSearch(criteria: SearchCriteria): Promise<boolean> {
     console.log('\n📋 Search Summary:');
     console.log(`City: ${criteria.city}${criteria.state ? `, ${criteria.state}` : ''}`);
+    console.log(`Listing Type: ${criteria.listingType === ListingType.RENT ? 'Rent' : criteria.listingType === ListingType.BUY ? 'Buy' : 'Any'}`);
     console.log(`Property Type: ${criteria.propertyType}`);
-    if (criteria.minPrice) console.log(`Min Price: $${criteria.minPrice.toLocaleString()}`);
-    if (criteria.maxPrice) console.log(`Max Price: $${criteria.maxPrice.toLocaleString()}`);
+    
+    const priceLabel = criteria.listingType === ListingType.RENT ? 'Rent' : 'Price';
+    if (criteria.minPrice) console.log(`Min ${priceLabel}: $${criteria.minPrice.toLocaleString()}`);
+    if (criteria.maxPrice) console.log(`Max ${priceLabel}: $${criteria.maxPrice.toLocaleString()}`);
     if (criteria.bedrooms) console.log(`Min Bedrooms: ${criteria.bedrooms}`);
     if (criteria.bathrooms) console.log(`Min Bathrooms: ${criteria.bathrooms}`);
     if (criteria.features.length > 0) console.log(`Features: ${criteria.features.join(', ')}`);

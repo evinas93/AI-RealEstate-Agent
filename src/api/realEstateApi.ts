@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { SearchCriteria, Property, PropertyType, ApiResponse } from '../types/property';
+import { SearchCriteria, Property, PropertyType, ListingType, ApiResponse } from '../types/property';
 import config from '../config';
 import chalk from 'chalk';
 
@@ -133,6 +133,14 @@ export class RealEstateApiClient {
         location: `${criteria.city}, ${criteria.state || ''}`
       };
       
+      // Add listing type (rent vs buy)
+      if (criteria.listingType === ListingType.RENT) {
+        searchParams.status_type = 'ForRent';
+      } else if (criteria.listingType === ListingType.BUY) {
+        searchParams.status_type = 'ForSale';
+      }
+      // If ListingType.ANY, don't specify status_type to get both
+      
       // Only add price filters if they exist
       if (criteria.minPrice) searchParams.minPrice = criteria.minPrice;
       if (criteria.maxPrice) searchParams.maxPrice = criteria.maxPrice;
@@ -212,6 +220,9 @@ export class RealEstateApiClient {
       city: criteria.city,
       state: criteria.state || item.state,
       zipCode: item.zipCode || item.postalCode,
+      listingType: criteria.listingType === ListingType.ANY 
+        ? this.getRandomListingType() 
+        : criteria.listingType,
       price: parseInt(item.price?.replace(/[^0-9]/g, '') || '0'),
       bedrooms: parseInt(item.bedrooms || '0'),
       bathrooms: parseFloat(item.bathrooms || '0'),
@@ -235,6 +246,9 @@ export class RealEstateApiClient {
       city: criteria.city,
       state: criteria.state || 'OH',
       zipCode: item.address?.match(/(\d{5})/) ? item.address.match(/(\d{5})/)[1] : '43215',
+      listingType: criteria.listingType === ListingType.ANY 
+        ? this.getRandomListingType() 
+        : criteria.listingType,
       price: item.price || item.zestimate || 0,
       bedrooms: item.bedrooms || 0,
       bathrooms: item.bathrooms || 0,
@@ -312,6 +326,9 @@ export class RealEstateApiClient {
         city: criteria.city,
         state: criteria.state || 'CA',
         zipCode: `${Math.floor(Math.random() * 90000) + 10000}`,
+        listingType: criteria.listingType === ListingType.ANY 
+          ? this.getRandomListingType() 
+          : criteria.listingType,
         price,
         bedrooms,
         bathrooms,
@@ -341,6 +358,11 @@ export class RealEstateApiClient {
 
   private getRandomPropertyType(): PropertyType {
     const types = [PropertyType.HOUSE, PropertyType.APARTMENT, PropertyType.CONDO, PropertyType.TOWNHOUSE];
+    return types[Math.floor(Math.random() * types.length)];
+  }
+
+  private getRandomListingType(): ListingType {
+    const types = [ListingType.RENT, ListingType.BUY];
     return types[Math.floor(Math.random() * types.length)];
   }
 

@@ -1,12 +1,19 @@
 export interface SearchCriteria {
   city: string;
   state?: string;
+  listingType: ListingType;
   minPrice?: number;
   maxPrice?: number;
   propertyType: PropertyType;
   bedrooms?: number;
   bathrooms?: number;
   features: string[];
+}
+
+export enum ListingType {
+  RENT = 'rent',
+  BUY = 'buy',
+  ANY = 'any'
 }
 
 export enum PropertyType {
@@ -23,6 +30,7 @@ export interface Property {
   city: string;
   state: string;
   zipCode: string;
+  listingType: ListingType;
   price: number;
   bedrooms: number;
   bathrooms: number;
