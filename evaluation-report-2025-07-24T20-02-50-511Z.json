@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-07-24T20:02:50.511Z",
+  "summary": {
+    "overallScore": 0.8223524816847982,
+    "conversationScore": 0.842389140719932,
+    "propertySearchScore": 0.7134920634920635,
+    "performanceScore": 1
+  },
+  "conversationEvals": {
+    "totalEvaluations": 2,
+    "averageScores": {
+      "accuracy": 1,
+      "relevance": 0.8380107843540326,
+      "helpfulness": 0.843771535509668,
+      "completeness": 0.6666666666666666,
+      "naturalness": 0.8634967170692922,
+      "overall": 0.842389140719932
+    },
+    "recentTrends": []
+  },
+  "propertyEvals": {
+    "totalSearches": 3,
+    "averageScores": {
+      "relevance": 1,
+      "diversity": 0.4166666666666667,
+      "completeness": 0.9285714285714285,
+      "freshness": 0.7333333333333333,
+      "rankingAccuracy": 0.4888888888888889,
+      "overall": 0.7134920634920635
+    },
+    "apiPerformance": {}
+  },
+  "systemPerformance": {
+    "operationStats": {
+      "slowOperations": 3,
+      "errorOperations": 0,
+      "mostCommonErrors": [],
+      "slowestOperations": [
+        {
+          "operation": "ai_process_user_input",
+          "duration": 1235
+        },
+        {
+          "operation": "ai_process_user_input",
+          "duration": 2898
+        },
+        {
+          "operation": "ai_process_user_input",
+          "duration": 1084
+        }
+      ]
+    },
+    "conversationStats": {
+      "totalConversations": 1,
+      "averageMessageCount": 0,
+      "averageAiResponseTime": 0,
+      "averageSearchesPerConversation": 0,
+      "averageExtractionAccuracy": null
+    },
+    "apiStats": {}
+  },
+  "recommendations": [
+    "Implement better result diversification"
+  ],
+  "issues": [
+    {
+      "severity": "medium",
+      "category": "Search Diversity",
+      "description": "Low diversity in property search results",
+      "impact": "Users see limited variety in property options",
+      "suggestion": "Enhance result diversification logic"
+    }
+  ]
+}
