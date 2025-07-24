@@ -298,13 +298,35 @@ export class RealEstateApiClient {
 
     const domains = listingDomains[source] || listingDomains['MockAPI'];
 
+    // Create diverse property configurations for better variety
+    const diversityConfigs = [
+      { bedrooms: 1, bathrooms: 1, priceMultiplier: 0.6, sqftRange: [400, 800], featureSet: 0 },
+      { bedrooms: 2, bathrooms: 1, priceMultiplier: 0.8, sqftRange: [600, 1200], featureSet: 1 },
+      { bedrooms: 2, bathrooms: 2, priceMultiplier: 1.0, sqftRange: [800, 1400], featureSet: 2 },
+      { bedrooms: 3, bathrooms: 2, priceMultiplier: 1.3, sqftRange: [1000, 1800], featureSet: 3 },
+      { bedrooms: 4, bathrooms: 3, priceMultiplier: 1.6, sqftRange: [1400, 2200], featureSet: 4 }
+    ];
+
+    // Create diverse feature sets
+    const featureSets = [
+      ['In-unit laundry', 'Balcony', 'Pet-friendly'],
+      ['Gym', 'Pool', 'Doorman'],
+      ['Garage', 'Garden', 'Fireplace'],
+      ['Elevator', 'Rooftop deck', 'Storage'],
+      ['Bike storage', 'Concierge', 'Hardwood floors']
+    ];
+
     for (let i = 0; i < count; i++) {
+      // Use different configurations to ensure variety
+      const config = diversityConfigs[i % diversityConfigs.length];
+      
       const basePrice = criteria.minPrice || 200000;
       const maxPrice = criteria.maxPrice || 800000;
-      let price = Math.floor(Math.random() * (maxPrice - basePrice)) + basePrice;
+      let price = Math.floor((basePrice + Math.random() * (maxPrice - basePrice)) * config.priceMultiplier);
 
-      const bedrooms = Math.max(criteria.bedrooms || 1, Math.floor(Math.random() * 5) + 1);
-      const bathrooms = Math.max(criteria.bathrooms || 1, Math.floor(Math.random() * 3) + 1);
+      // Use diverse bedroom/bathroom configurations
+      const bedrooms = Math.max(criteria.bedrooms || config.bedrooms, config.bedrooms);
+      const bathrooms = Math.max(criteria.bathrooms || config.bathrooms, config.bathrooms);
 
       // Determine property type - respect the criteria better
       let propertyType = criteria.propertyType;
@@ -312,41 +334,32 @@ export class RealEstateApiClient {
         propertyType = this.getRandomPropertyType();
       }
 
-      // Generate apartment-specific or house-specific data
-      let features = this.getRandomFeatures(criteria.features);
+      // Generate diverse feature sets
+      const baseFeatures = [...new Set([...criteria.features, ...featureSets[config.featureSet]])];
+      let features = baseFeatures;
       let squareFootage: number;
       let address: string;
       
       const streetNumber = Math.floor(Math.random() * 9999) + 1;
       const streetName = this.getRandomStreetName();
       
+      // Use configuration-based square footage for more realistic variety
+      const [minSqft, maxSqft] = config.sqftRange;
+      squareFootage = Math.floor(Math.random() * (maxSqft - minSqft)) + minSqft;
+      
       if (propertyType === PropertyType.APARTMENT) {
-        // Apartment-specific features
-        const apartmentFeatures = ['In-unit laundry', 'Balcony', 'Gym', 'Pet-friendly', 'Elevator', 'Doorman', 'Rooftop deck'];
-        features = [...new Set([...features, ...apartmentFeatures.slice(0, Math.floor(Math.random() * 3) + 1)])];
-        
-        // Apartment-specific pricing (typically lower for rent, similar for buy)
-        if (criteria.listingType === ListingType.RENT) {
-          price = Math.floor(price * 0.6); // Apartments typically cost less per month
-        }
-        
         // Apartment address with unit number
         const unitNumber = Math.floor(Math.random() * 500) + 101;
         address = `${streetNumber} ${streetName}, Unit ${unitNumber}`;
         
-        // Apartment square footage (typically smaller)
-        squareFootage = Math.floor(Math.random() * 1200) + 500; // 500-1700 sq ft
+        // Apartment-specific pricing adjustment for rent
+        if (criteria.listingType === ListingType.RENT) {
+          price = Math.floor(price * 0.7); // Apartments typically cost less per month
+        }
         
       } else {
-        // House-specific features
-        const houseFeatures = ['Garage', 'Garden', 'Fireplace', 'Basement', 'Attic', 'Deck', 'Fence'];
-        features = [...new Set([...features, ...houseFeatures.slice(0, Math.floor(Math.random() * 3) + 1)])];
-        
         // House address (no unit number)
         address = `${streetNumber} ${streetName}`;
-        
-        // House square footage (typically larger)
-        squareFootage = Math.floor(Math.random() * 2500) + 800; // 800-3300 sq ft
       }
       
       // Generate a realistic property ID

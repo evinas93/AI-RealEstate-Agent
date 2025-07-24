@@ -92,13 +92,26 @@ export class PropertyEvaluator {
     const propertyTypes = new Set(properties.map(p => p.propertyType));
     const priceRanges = this.getPriceRanges(properties);
     const sources = new Set(properties.map(p => p.source));
+    const bedroomVariety = new Set(properties.map(p => p.bedrooms));
+    const featureVariety = this.calculateFeatureVariety(properties);
     
-    // Normalize diversity scores
+    // Enhanced diversity scoring with more factors
     const typeScore = Math.min(propertyTypes.size / 4, 1); // Max 4 types
-    const priceScore = Math.min(priceRanges / 5, 1); // Max 5 price ranges
+    const priceScore = Math.min(priceRanges / 4, 1); // Max 4 price ranges  
     const sourceScore = Math.min(sources.size / 3, 1); // Max 3 sources
+    const bedroomScore = Math.min(bedroomVariety.size / 5, 1); // Max 5 bedroom counts
+    const featureScore = Math.min(featureVariety / 10, 1); // Max 10 unique features
     
-    return (typeScore + priceScore + sourceScore) / 3;
+    // Weighted average - price and bedroom diversity are most important for user experience
+    return (typeScore * 0.25 + priceScore * 0.3 + sourceScore * 0.15 + bedroomScore * 0.2 + featureScore * 0.1);
+  }
+
+  private calculateFeatureVariety(properties: Property[]): number {
+    const allFeatures = new Set();
+    properties.forEach(property => {
+      property.features.forEach(feature => allFeatures.add(feature));
+    });
+    return allFeatures.size;
   }
 
   private getPriceRanges(properties: Property[]): number {
@@ -108,10 +121,18 @@ export class PropertyEvaluator {
     const range = max - min;
     
     if (range === 0) return 1;
-    if (range < 50000) return 2;
-    if (range < 100000) return 3;
-    if (range < 250000) return 4;
-    return 5;
+    
+    // Create price buckets and count how many are represented
+    const buckets = 4; // Budget, Affordable, Premium, Luxury
+    const bucketSize = range / buckets;
+    const representedBuckets = new Set();
+    
+    prices.forEach(price => {
+      const bucketIndex = Math.min(Math.floor((price - min) / bucketSize), buckets - 1);
+      representedBuckets.add(bucketIndex);
+    });
+    
+    return representedBuckets.size;
   }
 
   private calculateCompleteness(properties: Property[]): number {
