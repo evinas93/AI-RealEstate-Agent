@@ -2,7 +2,7 @@ import { ConversationEvaluator, ConversationEvaluation } from './conversationEva
 import { PropertyEvaluator, PropertySearchEvaluation } from './propertyEvals';
 import { OperationTracer } from '../tracing/operationTracer';
 import chalk from 'chalk';
-import { writeFileSync } from 'fs';
+import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 export interface EvaluationReport {
@@ -336,10 +336,17 @@ export class EvaluationRunner {
   private exportEvaluationReport(report: EvaluationReport): void {
     const timestamp = report.timestamp.replace(/[:.]/g, '-');
     const filename = `evaluation-report-${timestamp}.json`;
-    const filepath = join(process.cwd(), filename);
+    const evaluationsDir = join(process.cwd(), 'evaluations');
+    
+    // Ensure evaluations directory exists
+    if (!existsSync(evaluationsDir)) {
+      mkdirSync(evaluationsDir, { recursive: true });
+    }
+    
+    const filepath = join(evaluationsDir, filename);
     
     writeFileSync(filepath, JSON.stringify(report, null, 2));
-    console.log(chalk.green(`📄 Evaluation report exported to: ${filename}`));
+    console.log(chalk.green(`📄 Evaluation report exported to: evaluations/${filename}`));
   }
 
   private displayInteractiveReport(report: EvaluationReport): void {

@@ -34,3 +34,4 @@ test*.json
 evaluation-report-*.json
 *-test-*.json
 *-eval-*.json
+evaluations/
