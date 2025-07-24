@@ -12,7 +12,7 @@ export class ExportUtils {
 
     try {
       if (format === 'json') {
-        await this.exportToJson(filepath, properties);
+        await this.exportToJson(filepath, properties, options);
       } else if (format === 'csv') {
         await this.exportToCsv(filepath, properties);
       }
@@ -23,8 +23,8 @@ export class ExportUtils {
     }
   }
 
-  private async exportToJson(filepath: string, properties: Property[]): Promise<void> {
-    const exportData = {
+  private async exportToJson(filepath: string, properties: Property[], options?: ExportOptions): Promise<void> {
+    const exportData: any = {
       exportDate: new Date().toISOString(),
       totalProperties: properties.length,
       properties: properties.map(property => ({
@@ -32,6 +32,17 @@ export class ExportUtils {
         dateAdded: property.dateAdded.toISOString()
       }))
     };
+
+    // Add conversation history if provided
+    if (options?.conversation) {
+      exportData.conversation = {
+        messages: options.conversation.messages.map(msg => ({
+          ...msg,
+          timestamp: msg.timestamp.toISOString()
+        })),
+        extractedPreferences: options.conversation.preferences
+      };
+    }
 
     await fs.writeFile(filepath, JSON.stringify(exportData, null, 2), 'utf-8');
   }

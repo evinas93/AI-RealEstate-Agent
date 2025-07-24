@@ -1,245 +1,102 @@
-# Real Estate CLI Search Tool
+# AI-Powered Real Estate Agent 🤖🏠
 
-A powerful command-line tool for searching real estate properties across multiple APIs with advanced filtering, ranking, and export capabilities.
+A TypeScript CLI application for searching real estate properties with AI conversational interface and intelligent ranking capabilities.
 
-## Features
-
-- 🔍 **Multi-API Search**: Integrates with multiple real estate APIs (Apify, Zillow, Realtor.com)
-- 🎯 **Advanced Filtering**: Filter by city, price range, property type, bedrooms, bathrooms, and features
-- 🏆 **Smart Ranking**: Intelligent scoring system based on your preferences
-- 📊 **Deduplication**: Automatically removes duplicate listings
-- 📁 **Export Options**: Export results to CSV or JSON formats
-- 🎨 **Beautiful Display**: Clean, colorful terminal output with tables
-- 🔄 **Interactive Workflow**: Refine searches and explore results interactively
-
-## Installation
-
-### Prerequisites
-
-- Node.js 18+ 
-- pnpm (recommended) or npm/yarn
-
-### Setup
-
-1. **Clone or download the project files**
-
-2. **Install pnpm** (if not already installed):
-   ```bash
-   npm install -g pnpm
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pnpm install
-   ```
-
-4. **Configure API Keys** (Optional - for real data):
-   
-   a. Copy the environment template:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   b. Edit `.env` and add your API keys:
-   ```env
-   # For Apify (Web Scraping)
-   APIFY_API_TOKEN=your_apify_token_here
-   
-   # For other APIs (as you obtain them)
-   ZILLOW_API_KEY=your_zillow_key_here
-   RAPIDAPI_KEY=your_rapidapi_key_here
-   ```
-   
-   c. Set `USE_MOCK_DATA=false` to use real APIs
-
-### Getting API Keys
-
-The application supports multiple real estate APIs. Here's how to get started:
-
-1. **Apify** (Recommended for starting):
-   - Sign up at [apify.com](https://apify.com)
-   - Get your API token from Account Settings
-   - Use the real estate scraper: `petr_cermak/real-estate-scraper`
-
-2. **RapidAPI** (Multiple real estate APIs):
-   - Sign up at [rapidapi.com](https://rapidapi.com)
-   - Subscribe to real estate APIs like Realty-in-US or Zillow
-   - Copy your RapidAPI key
-
-3. **Other Supported APIs**:
-   - RentBerry API
-   - Rentals.com API
-   - Direct Zillow API (if available)
-
-**Note**: The application works without API keys using mock data, perfect for testing and development.
-
-## Usage
-
-### Running the Application
+## 🚀 Quick Start
 
 ```bash
-# Development mode
-pnpm dev
+# Install dependencies
+npm install
 
-# Production mode
-pnpm build
-pnpm start
+# Run the application
+npm run dev
 ```
 
-### Search Workflow
+## ✨ Features
 
-1. **Enter Search Criteria**:
-   - City (required)
-   - State (optional)
-   - Property type (House, Apartment, Condo, etc.)
-   - Price range
-   - Minimum bedrooms/bathrooms
-   - Desired features (Pool, Garage, etc.)
+### 🤖 AI Conversational Mode (NEW!)
+- **Natural Language Interface**: Talk to the AI agent in plain English
+- **Conversation Memory**: The AI remembers your preferences throughout the conversation
+- **Intelligent Understanding**: Automatically extracts search criteria from natural conversation
+- **Context-Aware Responses**: The AI provides personalized recommendations based on your needs
 
-2. **Review Results**:
-   - Properties are ranked by match score
-   - View detailed information for top matches
-   - See summary statistics
+### 🏠 Core Features
+- **🔍 Multi-API Integration**: Apify, Zillow, mock data support
+- **🏆 Smart Ranking System**: 100-point scoring algorithm based on price match, features, and recency
+- **🎯 Advanced Filtering**: Price range, property type, bedrooms, bathrooms, features
+- **📊 Deduplication**: Automatic removal of duplicate listings
+- **📁 Export Options**: CSV and JSON export with match scores and conversation history
+- **🎨 Interactive CLI**: Beautiful terminal interface with colored tables
+- **🔄 Iterative Search**: Refine searches and explore results interactively
 
-3. **Next Actions**:
-   - Perform a new search
-   - Refine current search
-   - Export results to CSV/JSON
-   - Exit
-
-### Example Search
-
-```
-🏠 Welcome to Real Estate CLI Search Tool!
-
-? Enter the city to search in: San Francisco
-? Enter the state (optional): CA
-? Select property type: Apartment
-? Minimum price (optional): 2000
-? Maximum price (optional): 4000
-? Minimum bedrooms (optional): 2
-? Select desired features: Garage, Pet-friendly
-
-✔ Found 23 properties
-```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `USE_MOCK_DATA` | Use mock data instead of real APIs | `true` |
-| `API_TIMEOUT` | API request timeout in milliseconds | `30000` |
-| `MAX_RESULTS_PER_API` | Maximum results from each API | `50` |
-| `NODE_ENV` | Environment (development/production) | `development` |
-
-### API Configuration
-
-Each API can be configured in the `.env` file. See `.env.example` for all available options.
-
-## Development
-
-### Project Structure
+## 📁 Project Structure
 
 ```
 src/
-├── api/           # API client implementations
-├── cli/           # CLI prompts and interactions
-├── config/        # Configuration management
-├── services/      # Business logic
-├── types/         # TypeScript type definitions
-└── utils/         # Utility functions
+├── agents/           # AI agents and conversation memory
+├── api/              # API clients (Apify, Zillow, mock data)
+├── cli/              # Interactive prompts and AI interface
+├── config/           # Environment and API configuration
+├── services/         # Core business logic and ranking system
+├── types/            # TypeScript interfaces and enums
+└── utils/            # Display formatting and export utilities
 ```
 
-### Building
+## 🤖 AI Conversational Mode Example
 
-```bash
-pnpm build
+When you have an OpenAI API key configured, the app automatically switches to conversational mode:
+
+```
+🤖 AI Real Estate Assistant
+
+Hello! I'm your AI-powered real estate assistant. I can help you find the perfect property.
+Just tell me what you're looking for in natural language!
+
+Examples:
+- "I need a 3-bedroom house in Columbus under $500k"
+- "Looking for a pet-friendly apartment to rent in Austin"
+- "Show me condos with a pool near downtown"
+
+You: I'm looking for a family home in Columbus, Ohio. We need at least 3 bedrooms 
+and 2 bathrooms. Our budget is around $400,000 to $500,000. A garage would be great.
 ```
 
-### Package Manager Compatibility
+## 🔧 Configuration and Setup
 
-This project is optimized for **pnpm** but also supports npm and yarn:
+1. **Create a `.env` file** in the project root directory
+2. **Add your OpenAI API key** (required for AI conversational mode)
+3. **Configure other settings** as needed
+
+See [SETUP_ENV.md](./SETUP_ENV.md) for detailed configuration instructions.
+
+### Quick Setup:
+
+**Option 1: Use the setup script**
 
 ```bash
-# Using pnpm (recommended)
-pnpm install
-pnpm dev
+# On Linux/Mac:
+./setup-env.sh
 
-# Using npm
+# On Windows:
+setup-env.bat
+```
+
+**Option 2: Manual setup**
+
+```bash
+# Create .env file
+echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
+echo "USE_MOCK_DATA=true" >> .env
+
+# Install dependencies
 npm install
+
+# Run the application
 npm run dev
-
-# Using yarn
-yarn install
-yarn dev
 ```
 
-### Testing with Mock Data
+### Getting API Keys:
 
-By default, the application uses mock data. This is perfect for:
-- Testing the user interface
-- Development without API costs
-- Demonstrating functionality
-
-To switch to real APIs, set `USE_MOCK_DATA=false` in your `.env` file.
-
-## Troubleshooting
-
-### No API Keys Warning
-
-If you see "No API keys configured. Using mock data.", you need to:
-1. Copy `.env.example` to `.env`
-2. Add at least one API key
-3. Set `USE_MOCK_DATA=false`
-
-### PowerShell Script Execution
-
-If you get script execution errors on Windows:
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-### Installing pnpm
-
-If you don't have pnpm installed:
-
-**Via npm:**
-```bash
-npm install -g pnpm
-```
-
-**Via PowerShell (Windows):**
-```powershell
-iwr https://get.pnpm.io/install.ps1 -useb | iex
-```
-
-**Via Homebrew (macOS):**
-```bash
-brew install pnpm
-```
-
-### Network Issues
-
-If you encounter network errors with pnpm, you can:
-
-1. **Use npm as fallback:**
-   ```bash
-   npm install
-   npm run dev
-   ```
-
-2. **Configure pnpm registry (if needed):**
-   ```bash
-   pnpm config set registry https://registry.npmjs.org/
-   ```
-
-3. **Clear pnpm cache:**
-   ```bash
-   pnpm store prune
-   ```
-
-## License
-
-MIT
+- **OpenAI**: https://platform.openai.com/api-keys (Required for AI mode)
+- **Apify**: https://console.apify.com/account/integrations (Optional)
+- **RapidAPI**: https://rapidapi.com/ (Optional for Zillow data)

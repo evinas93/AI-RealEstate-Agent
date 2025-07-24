@@ -23,6 +23,8 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
+    "@langchain/core": "^0.3.66",
+    "@langchain/openai": "^0.6.3",
     "axios": "^1.6.2",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.3",
@@ -30,6 +32,7 @@
     "dotenv": "^17.2.0",
     "inquirer": "^9.2.12",
     "lodash": "^4.17.21",
+    "openai": "^5.10.2",
     "ora": "^5.4.1",
     "rimraf": "^5.0.5"
   },

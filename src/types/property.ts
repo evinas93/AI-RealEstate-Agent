@@ -55,4 +55,8 @@ export interface ExportOptions {
   format: 'csv' | 'json';
   filename: string;
   properties: Property[];
+  conversation?: {
+    messages: Array<{ role: string; content: string; timestamp: Date }>;
+    preferences: any;
+  };
 }

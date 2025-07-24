@@ -28,6 +28,18 @@ export interface ApiConfig {
   };
 }
 
+export interface AIConfig {
+  openai: {
+    apiKey: string;
+    model: string;
+    temperature: number;
+  };
+  conversationMemory: {
+    enabled: boolean;
+    maxConversations: number;
+  };
+}
+
 export interface AppConfig {
   nodeEnv: string;
   apiTimeout: number;
@@ -39,6 +51,7 @@ class Config {
   private static instance: Config;
   public api: ApiConfig;
   public app: AppConfig;
+  public ai: AIConfig;
 
   private constructor() {
     this.api = {
@@ -68,8 +81,20 @@ class Config {
     this.app = {
       nodeEnv: process.env.NODE_ENV || 'development',
       apiTimeout: parseInt(process.env.API_TIMEOUT || '30000', 10),
-      maxResultsPerApi: parseInt(process.env.MAX_RESULTS_PER_API || '50', 10),
-      useMockData: process.env.USE_MOCK_DATA === 'true'
+      maxResultsPerApi: parseInt(process.env.MAX_RESULTS_PER_API || '20', 10),
+      useMockData: process.env.USE_MOCK_DATA === 'true',
+    };
+
+    this.ai = {
+      openai: {
+        apiKey: process.env.OPENAI_API_KEY || '',
+        model: process.env.AI_MODEL || 'gpt-3.5-turbo',
+        temperature: parseFloat(process.env.AI_TEMPERATURE || '0.7')
+      },
+      conversationMemory: {
+        enabled: process.env.CONVERSATION_MEMORY_ENABLED !== 'false',
+        maxConversations: parseInt(process.env.MAX_CONVERSATIONS || '10', 10)
+      }
     };
   }
 
@@ -97,8 +122,8 @@ class Config {
     return !!this.api.rentals.apiKey;
   }
 
-  public hasValidRapidApiConfig(): boolean {
-    return !!this.api.rapidApi.key;
+  public hasValidAIConfig(): boolean {
+    return !!this.ai.openai.apiKey;
   }
 
   public hasAnyValidApiConfig(): boolean {
@@ -107,7 +132,7 @@ class Config {
       this.hasValidZillowConfig() ||
       this.hasValidRentberryConfig() ||
       this.hasValidRentalsConfig() ||
-      this.hasValidRapidApiConfig()
+      false
     );
   }
 }
