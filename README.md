@@ -1,83 +1,86 @@
-# AI-Powered Real Estate Agent 🤖🏠
+# 🏠 AI Real Estate Agent
 
-A TypeScript CLI application with AI conversational interface for intelligent property search and evaluation.
+> **Smart property search with AI conversations, beautiful exports, and comprehensive evaluation**
+
+A modern TypeScript CLI that finds properties using natural language, ranks them intelligently, and exports stunning reports with built-in quality monitoring.
 
 ## 🚀 Quick Start
 
 ```bash
-# Install pnpm (if needed)
+# 1. Install & setup
 npm install -g pnpm
-
-# Setup and run
 pnpm install
+
+# 2. Add API key (optional)
 echo "OPENAI_API_KEY=your_key_here" > .env
-echo "USE_MOCK_DATA=true" >> .env
+
+# 3. Start searching!
 pnpm run dev
 ```
 
-## ✨ Key Features
+*Works immediately with mock data - no API keys required!*
 
-### 🤖 **AI Conversational Mode**
-- Natural language property search
-- Intelligent criteria extraction
-- Context-aware recommendations
-- Conversation memory
+## ✨ Features
 
-### 🏠 **Smart Property Search** 
-- Multi-API integration (Zillow, Apify, mock data)
-- 100-point ranking algorithm
-- Advanced filtering and deduplication
-- CSV/JSON export with conversation history
+- 🤖 **AI Chat Interface** - Talk naturally: *"Find me condos downtown under $500k"*
+- 🏠 **Smart Search** - Multi-source property data with intelligent ranking
+- 📊 **Beautiful Exports** - Stunning HTML reports, enhanced CSV, rich JSON
+- 📈 **Market Insights** - Price analysis, investment ratings, recommendations
+- ⚡ **Real-time Evaluation** - Performance monitoring and quality metrics
+- 🔍 **AI Quality Tracking** - Conversation accuracy, relevance, helpfulness
 
-### 📊 **Evaluation & Tracing System** *(NEW)*
-- **Conversation Quality**: Accuracy, relevance, helpfulness metrics
-- **Search Performance**: Relevance, diversity, ranking evaluation  
-- **Real-time Monitoring**: API performance, response times, error tracking
-- **Automated Evaluations**: Continuous monitoring and alerting
+## 🎯 How It Works
 
-## 🔧 Configuration
-
-### Required
-- **OpenAI API Key**: Get from [platform.openai.com](https://platform.openai.com/api-keys)
-
-### Optional  
-- **RapidAPI Key**: For real Zillow data
-- **Apify Token**: For web scraping
-
-See [SETUP_ENV.md](./SETUP_ENV.md) for detailed setup.
-
-## 🎯 Usage Examples
-
-### Basic Property Search
 ```
-You: I need a 3-bedroom house in Columbus under $500k
-AI: I'll help you find houses in Columbus, Ohio with 3+ bedrooms under $500,000...
+You: "Show me 2-bedroom condos in downtown"
+AI:  🏠 Found 24 properties! Here are the top matches...
+     📊 Export options: HTML report, CSV data, JSON insights
+     📈 Quality Score: 89.2% | Performance: ⚡ 1.2s
 ```
 
-### Run Evaluations
+## 🛠️ Setup Options
+
+### Option 1: Mock Data (Instant)
 ```bash
-# Full evaluation dashboard
-pnpm run eval
+echo "USE_MOCK_DATA=true" > .env
+pnpm run dev  # Ready to go!
+```
 
-# Test specific components
-pnpm run eval:conversation
-pnpm run eval:property
+### Option 2: Real Data (Optional)
+```bash
+# Get keys from:
+# - OpenAI: platform.openai.com
+# - RapidAPI: rapidapi.com (for Zillow)
+
+echo "OPENAI_API_KEY=your_key" > .env
+echo "ZILLOW_API_KEY=your_key" >> .env
 ```
 
 ## 📁 Project Structure
 
 ```
 src/
-├── agents/          # AI conversational agent
-├── api/             # External API integrations  
-├── evals/           # Evaluation framework
-├── tracing/         # Performance monitoring
-├── cli/             # Interactive commands
-├── services/        # Business logic & ranking
-└── utils/           # Utilities & export
+├── 🤖 agents/     # AI conversation logic
+├── 🏠 api/        # Property data sources  
+├── 📊 evals/      # Quality monitoring & evaluation
+├── 🔍 tracing/    # Performance monitoring
+├── 💼 services/   # Search & ranking
+└── 🎨 utils/      # Export & display
+```
+
+## 🔧 Commands
+
+```bash
+pnpm run dev        # 🚀 Start the app
+pnpm run build      # 📦 Build for production
+pnpm run eval       # 📊 Run full evaluation suite
+pnpm run eval:conversation  # 🤖 Test AI quality
+pnpm run eval:property      # 🏠 Test search performance
 ```
 
 ## 📊 Evaluation Dashboard
+
+Get real-time insights into your AI agent's performance:
 
 ```
 📊 EVALUATION DASHBOARD
@@ -93,33 +96,40 @@ src/
   2. Enhance result diversification
 ```
 
-## 🚀 Development
+### 🔍 What Gets Evaluated
+- **🤖 Conversation Quality** - Accuracy, relevance, helpfulness metrics
+- **🏠 Search Performance** - Relevance, diversity, ranking evaluation  
+- **⚡ Real-time Monitoring** - API performance, response times, error tracking
+- **📊 Automated Testing** - Continuous monitoring and alerting
 
-```bash
-# Development mode
-pnpm run dev
+## 📸 What You'll Get
 
-# Build for production
-pnpm run build
+### Beautiful Exports
+- **🌐 HTML Reports** - Professional property showcases
+- **📈 Enhanced CSV** - Emoji headers, calculated fields  
+- **📊 Rich JSON** - Market insights, recommendations
 
-# Run evaluations
-pnpm run eval
+### Smart Features
+- **🎯 Match Scoring** - Properties ranked by your preferences
+- **💡 Highlights** - Key selling points automatically detected
+- **📈 Market Analysis** - Price trends and investment ratings
+- **🏆 Top Picks** - Best value, newest, highest-rated properties
 
-# Run with monitoring
-pnpm run eval:demo
-```
+### Production Monitoring
+- **📊 Quality Metrics** - Track AI conversation accuracy
+- **⚡ Performance Tracking** - Monitor response times and errors
+- **🔍 Evaluation Reports** - Comprehensive system health insights
+- **📈 Continuous Improvement** - Data-driven optimization suggestions
 
-## 📚 Documentation
+## 🚀 Next Steps
 
-- **[Evaluation Guide](./EVALUATIONS_AND_TRACING_GUIDE.md)**: Complete evaluation system docs
-- **[Environment Setup](./SETUP_ENV.md)**: Detailed configuration guide
+1. **Try it now**: `pnpm run dev` 
+2. **Export results**: Choose HTML for beautiful reports
+3. **Monitor quality**: Run `pnpm run eval` to see performance metrics
+4. **Add real data**: Get API keys for live property data
 
-## 🏆 What's New
+---
 
-✅ **AI Quality Metrics**: Measure conversation accuracy and helpfulness  
-✅ **Search Evaluation**: Track relevance and ranking performance  
-✅ **Real-time Monitoring**: Live performance dashboards  
-✅ **Automated Testing**: Continuous evaluation and alerting  
-✅ **Production Ready**: Comprehensive tracing and error tracking
+**Built for developers** who want production-ready AI applications with beautiful UX, comprehensive monitoring, and quality assurance. 
 
-Perfect for developers building production AI applications who need confidence in their system's performance and quality.
+[📖 Evaluation Guide](./EVALUATIONS_AND_TRACING_GUIDE.md) | [⚙️ Setup Guide](./SETUP_ENV.md)
