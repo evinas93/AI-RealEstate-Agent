@@ -100,7 +100,7 @@ export interface ApiResponse {
 }
 
 export interface ExportOptions {
-  format: 'csv' | 'json';
+  format: 'csv' | 'json' | 'html';
   filename: string;
   properties: Property[];
   conversation?: {

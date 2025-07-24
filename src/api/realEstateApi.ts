@@ -313,9 +313,9 @@ export class RealEstateApiClient {
     return (data.props || []).map((item: any) => ({
       id: `zillow-${item.zpid}`,
       address: item.address || `Property ${item.zpid}`,
-      city: criteria.city,
-      state: criteria.state || 'OH',
-      zipCode: item.address?.match(/(\d{5})/) ? item.address.match(/(\d{5})/)[1] : '43215',
+      city: this.extractCityFromAddress(item.address) || criteria.city,
+      state: this.extractStateFromAddress(item.address) || criteria.state || 'CA',
+      zipCode: this.extractZipFromAddress(item.address) || '90000',
       listingType: criteria.listingType === ListingType.ANY 
         ? this.getRandomListingType() 
         : criteria.listingType,
@@ -500,5 +500,43 @@ export class RealEstateApiClient {
     }
 
     return features;
+  }
+
+  private extractCityFromAddress(address?: string): string | null {
+    if (!address) return null;
+    
+    // Try to extract city from full address
+    // Format examples: "123 Main St, Los Angeles, CA 90210" or "267 S San Pedro St UNIT 326, Los Angeles, CA 90012"
+    const cityMatch = address.match(/,\s*([^,]+),\s*[A-Z]{2}\s*\d{5}/);
+    if (cityMatch) {
+      return cityMatch[1].trim();
+    }
+    
+    return null;
+  }
+
+  private extractStateFromAddress(address?: string): string | null {
+    if (!address) return null;
+    
+    // Extract state from address - look for 2-letter state code before zip
+    // Format: "123 Main St, Los Angeles, CA 90210"
+    const stateMatch = address.match(/,\s*([A-Z]{2})\s*\d{5}/);
+    if (stateMatch) {
+      return stateMatch[1];
+    }
+    
+    return null;
+  }
+
+  private extractZipFromAddress(address?: string): string | null {
+    if (!address) return null;
+    
+    // Extract 5-digit zip code
+    const zipMatch = address.match(/\b(\d{5})\b/);
+    if (zipMatch) {
+      return zipMatch[1];
+    }
+    
+    return null;
   }
 }

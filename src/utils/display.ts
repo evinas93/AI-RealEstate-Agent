@@ -157,4 +157,43 @@ export class DisplayUtils {
   displayInfo(message: string): void {
     console.log(chalk.blue(`\nℹ️  ${message}`));
   }
+
+  displayExportSuccess(filepath: string, format: string, propertiesCount: number): void {
+    const formatUpper = format.toUpperCase();
+    const fileName = filepath.split(/[\\\/]/).pop() || filepath;
+    
+    const box = `
+┌─────────────────────────────────────────────────────────────────────┐
+│  ✅ Export Successful! 🎉                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│  📁 Format: ${formatUpper.padEnd(58)} │
+│  📊 Properties: ${propertiesCount.toString().padEnd(52)} │
+│  💾 File: ${fileName.padEnd(60)} │
+│  🕒 Generated: ${new Date().toLocaleTimeString().padEnd(51)} │
+└─────────────────────────────────────────────────────────────────────┘
+    `;
+    
+    console.log(chalk.green(box));
+    
+    // Add format-specific messages
+    if (format === 'html') {
+      console.log(chalk.cyan(`\n🌐 Your beautiful HTML report is ready! Open it in any web browser.`));
+      console.log(chalk.gray(`   ${filepath}`));
+    } else if (format === 'json') {
+      console.log(chalk.cyan(`\n📊 Your enhanced JSON export includes emojis, insights, and market analysis!`));
+      console.log(chalk.gray(`   ${filepath}`));
+    } else if (format === 'csv') {
+      console.log(chalk.cyan(`\n📈 Your CSV export has emojis and calculated fields ready for Excel!`));
+      console.log(chalk.gray(`   ${filepath}`));
+    }
+    
+    console.log(chalk.magenta('\n✨ Features included:'));
+    console.log(chalk.white('   • 🏆 Top property recommendations'));
+    console.log(chalk.white('   • 📈 Market insights and analytics'));
+    console.log(chalk.white('   • 💡 Investment ratings and highlights'));
+    console.log(chalk.white('   • 🎯 Enhanced match scoring'));
+    console.log(chalk.white('   • 💰 Price analysis and comparisons'));
+    
+    console.log(chalk.cyan(`\n🎉 Enjoy your beautiful real estate report!\n`));
+  }
 }

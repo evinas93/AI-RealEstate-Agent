@@ -228,7 +228,7 @@ class RealEstateCliApp {
     try {
       const exportOptions = await this.prompts.getExportOptions();
       
-      const spinner = ora(`Exporting to ${exportOptions.format.toUpperCase()}...`).start();
+      const spinner = ora(`🎨 Creating your beautiful ${exportOptions.format.toUpperCase()} export...`).start();
       
       const filepath = await this.exportUtils.exportProperties({
         format: exportOptions.format,
@@ -236,7 +236,8 @@ class RealEstateCliApp {
         properties: this.currentProperties
       });
 
-      spinner.succeed(`Exported ${this.currentProperties.length} properties to ${filepath}`);
+      spinner.stop();
+      this.displayUtils.displayExportSuccess(filepath, exportOptions.format, this.currentProperties.length);
     } catch (error) {
       this.displayUtils.displayError(`Export failed: ${error}`);
     }
@@ -251,7 +252,7 @@ class RealEstateCliApp {
     try {
       const exportOptions = await this.aiPrompts.getExportOptions();
       
-      const spinner = ora(`Exporting to ${exportOptions.format.toUpperCase()}...`).start();
+      const spinner = ora(`🎨 Creating your beautiful ${exportOptions.format.toUpperCase()} export...`).start();
       
       const exportData: ExportOptions = {
         format: exportOptions.format,
@@ -269,10 +270,11 @@ class RealEstateCliApp {
       
       const filepath = await this.exportUtils.exportProperties(exportData);
 
-      spinner.succeed(`Exported ${this.currentProperties.length} properties to ${filepath}`);
+      spinner.stop();
+      this.displayUtils.displayExportSuccess(filepath, exportOptions.format, this.currentProperties.length);
       
       if (exportOptions.includeConversation && exportOptions.format === 'csv') {
-        this.displayUtils.displayInfo('Note: Conversation history is only included in JSON exports.');
+        this.displayUtils.displayInfo('💡 Note: Conversation history is only included in JSON exports.');
       }
     } catch (error) {
       this.displayUtils.displayError(`Export failed: ${error}`);

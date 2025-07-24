@@ -117,21 +117,22 @@ export class CliPrompts {
     return action;
   }
 
-  async getExportOptions(): Promise<{ format: 'csv' | 'json'; filename: string }> {
+  async getExportOptions(): Promise<{ format: 'csv' | 'json' | 'html'; filename: string }> {
     const answers = await inquirer.prompt([
       {
         type: 'list',
         name: 'format',
-        message: 'Select export format:',
+        message: '📁 Select export format:',
         choices: [
-          { name: 'CSV', value: 'csv' },
-          { name: 'JSON', value: 'json' }
+          { name: '📊 JSON - Beautiful structured data with emojis and insights', value: 'json' },
+          { name: '📈 CSV - Enhanced spreadsheet with emojis and calculations', value: 'csv' },
+          { name: '🌐 HTML - Stunning visual report with charts and styling', value: 'html' }
         ]
       },
       {
         type: 'input',
         name: 'filename',
-        message: 'Enter filename (without extension):',
+        message: '📝 Enter filename (without extension):',
         default: `real-estate-search-${new Date().toISOString().split('T')[0]}`,
         validate: (input: string) => input.trim().length > 0 || 'Filename is required'
       }
