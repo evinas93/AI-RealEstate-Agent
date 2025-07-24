@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Command-line real estate search tool",
   "main": "dist/index.js",
-  "packageManager": "pnpm@8.0.0",
+  "packageManager": "pnpm@9.0.0",
   "bin": {
     "real-estate-search": "dist/index.js"
   },
@@ -12,8 +12,8 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "clean": "rimraf dist",
-    "install:pnpm": "pnpm install",
-    "install:npm": "npm install"
+    "install": "pnpm install",
+    "preinstall": "npx only-allow pnpm"
   },
   "keywords": [
     "real-estate",
@@ -40,6 +40,7 @@
     "@types/inquirer": "^9.0.7",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.4",
+    "only-allow": "^1.2.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.3.3"
   }

@@ -1,0 +1,17 @@
+# Enable peer dependency auto-installation
+auto-install-peers=true
+
+# Use stricter dependency resolution
+strict-peer-dependencies=false
+
+# Enable hoisting for better compatibility
+shamefully-hoist=false
+
+# Store directory (optional - use default)
+# store-dir=~/.pnpm-store
+
+# Save exact versions by default
+save-exact=false
+
+# Enable progress bars
+progress=true 

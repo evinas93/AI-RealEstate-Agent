@@ -4,12 +4,26 @@ A TypeScript CLI application for searching real estate properties with AI conver
 
 ## 🚀 Quick Start
 
+### Prerequisites
+This project uses [pnpm](https://pnpm.io/) as the package manager. Install it first:
+
+```bash
+# Install pnpm globally
+npm install -g pnpm
+
+# Or using Corepack (Node.js 16.9+)
+corepack enable
+corepack prepare pnpm@9.0.0 --activate
+```
+
+### Installation
+
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Run the application
-npm run dev
+pnpm run dev
 ```
 
 ## ✨ Features
@@ -89,10 +103,10 @@ echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
 echo "USE_MOCK_DATA=true" >> .env
 
 # Install dependencies
-npm install
+pnpm install
 
 # Run the application
-npm run dev
+pnpm run dev
 ```
 
 ### Getting API Keys:
@@ -100,3 +114,36 @@ npm run dev
 - **OpenAI**: https://platform.openai.com/api-keys (Required for AI mode)
 - **Apify**: https://console.apify.com/account/integrations (Optional)
 - **RapidAPI**: https://rapidapi.com/ (Optional for Zillow data)
+
+## 📦 Package Management
+
+This project uses **pnpm** for package management, which offers several advantages:
+
+- **Faster installations**: Up to 2x faster than npm
+- **Disk space efficient**: Uses a content-addressable store
+- **Strict dependency resolution**: Prevents phantom dependencies
+- **Better monorepo support**: Built-in workspace support
+
+### Common Commands:
+
+```bash
+# Install dependencies
+pnpm install
+
+# Add a dependency
+pnpm add <package-name>
+
+# Add a dev dependency
+pnpm add -D <package-name>
+
+# Remove a dependency
+pnpm remove <package-name>
+
+# Run scripts
+pnpm run dev
+pnpm run build
+pnpm start
+
+# Update dependencies
+pnpm update
+```

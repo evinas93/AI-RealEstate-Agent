@@ -66,7 +66,27 @@ MAX_RESULTS_PER_API=20
    RAPIDAPI_KEY=your-rapidapi-key
    ```
 
+## Package Manager
+
+This project uses **pnpm** instead of npm for package management. Make sure you have pnpm installed:
+
+```bash
+# Install pnpm globally
+npm install -g pnpm
+
+# Or enable via Corepack (Node.js 16.9+)
+corepack enable
+```
+
+Then use pnpm commands:
+```bash
+pnpm install    # Install dependencies
+pnpm run dev    # Run development server
+pnpm run build  # Build the project
+```
+
 ## Notes
 - The `.env` file is ignored by git for security
 - Never commit your API keys to version control
-- You can run the app without any API keys using mock data mode 
+- You can run the app without any API keys using mock data mode
+- This project enforces pnpm usage to ensure consistent dependency resolution 
