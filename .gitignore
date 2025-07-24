@@ -28,3 +28,9 @@ pnpm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+
+# Test files and evaluation reports (may contain sensitive data)
+test*.json
+evaluation-report-*.json
+*-test-*.json
+*-eval-*.json
