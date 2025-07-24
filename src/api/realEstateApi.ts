@@ -301,14 +301,53 @@ export class RealEstateApiClient {
     for (let i = 0; i < count; i++) {
       const basePrice = criteria.minPrice || 200000;
       const maxPrice = criteria.maxPrice || 800000;
-      const price = Math.floor(Math.random() * (maxPrice - basePrice)) + basePrice;
+      let price = Math.floor(Math.random() * (maxPrice - basePrice)) + basePrice;
 
       const bedrooms = Math.max(criteria.bedrooms || 1, Math.floor(Math.random() * 5) + 1);
       const bathrooms = Math.max(criteria.bathrooms || 1, Math.floor(Math.random() * 3) + 1);
 
+      // Determine property type - respect the criteria better
+      let propertyType = criteria.propertyType;
+      if (criteria.propertyType === PropertyType.ANY) {
+        propertyType = this.getRandomPropertyType();
+      }
+
+      // Generate apartment-specific or house-specific data
+      let features = this.getRandomFeatures(criteria.features);
+      let squareFootage: number;
+      let address: string;
+      
       const streetNumber = Math.floor(Math.random() * 9999) + 1;
       const streetName = this.getRandomStreetName();
-      const address = `${streetNumber} ${streetName}`;
+      
+      if (propertyType === PropertyType.APARTMENT) {
+        // Apartment-specific features
+        const apartmentFeatures = ['In-unit laundry', 'Balcony', 'Gym', 'Pet-friendly', 'Elevator', 'Doorman', 'Rooftop deck'];
+        features = [...new Set([...features, ...apartmentFeatures.slice(0, Math.floor(Math.random() * 3) + 1)])];
+        
+        // Apartment-specific pricing (typically lower for rent, similar for buy)
+        if (criteria.listingType === ListingType.RENT) {
+          price = Math.floor(price * 0.6); // Apartments typically cost less per month
+        }
+        
+        // Apartment address with unit number
+        const unitNumber = Math.floor(Math.random() * 500) + 101;
+        address = `${streetNumber} ${streetName}, Unit ${unitNumber}`;
+        
+        // Apartment square footage (typically smaller)
+        squareFootage = Math.floor(Math.random() * 1200) + 500; // 500-1700 sq ft
+        
+      } else {
+        // House-specific features
+        const houseFeatures = ['Garage', 'Garden', 'Fireplace', 'Basement', 'Attic', 'Deck', 'Fence'];
+        features = [...new Set([...features, ...houseFeatures.slice(0, Math.floor(Math.random() * 3) + 1)])];
+        
+        // House address (no unit number)
+        address = `${streetNumber} ${streetName}`;
+        
+        // House square footage (typically larger)
+        squareFootage = Math.floor(Math.random() * 2500) + 800; // 800-3300 sq ft
+      }
       
       // Generate a realistic property ID
       const propertyId = Math.random().toString(36).substring(2, 15);
@@ -324,7 +363,7 @@ export class RealEstateApiClient {
         id: `${source.toLowerCase()}-${i + 1}`,
         address,
         city: criteria.city,
-        state: criteria.state || 'CA',
+        state: criteria.state || 'OH',
         zipCode: `${Math.floor(Math.random() * 90000) + 10000}`,
         listingType: criteria.listingType === ListingType.ANY 
           ? this.getRandomListingType() 
@@ -332,12 +371,10 @@ export class RealEstateApiClient {
         price,
         bedrooms,
         bathrooms,
-        squareFootage: Math.floor(Math.random() * 2000) + 800,
-        propertyType: criteria.propertyType === PropertyType.ANY 
-          ? this.getRandomPropertyType() 
-          : criteria.propertyType,
-        description: `Beautiful ${criteria.propertyType} in ${criteria.city}`,
-        features: this.getRandomFeatures(criteria.features),
+        squareFootage,
+        propertyType,
+        description: `Beautiful ${propertyType} in ${criteria.city}${propertyType === PropertyType.APARTMENT ? ' with modern amenities' : ' with spacious rooms'}`,
+        features,
         imageUrls: [
           `https://photos.zillowstatic.com/fp/${propertyId}-cc_ft_768.jpg`,
           `https://photos.zillowstatic.com/fp/${propertyId}-uncropped_scaled_within_1536_1152.jpg`

@@ -104,7 +104,18 @@ If the user provides enough information for a search, respond with "READY_TO_SEA
 Conversation:
 ${conversation}
 
-Extract the following information and return as JSON:
+PROPERTY TYPE MAPPING EXAMPLES:
+- "apartment", "apt", "apartment room", "apartment rooms", "rental unit", "flat", "studio" → "apartment"
+- "house", "home", "single family", "detached home", "family house" → "house"  
+- "condo", "condominium", "condo unit" → "condo"
+- "townhouse", "townhome", "row house" → "townhouse"
+- "any type", "doesn't matter", "either", "whatever" → "any"
+
+LISTING TYPE MAPPING:
+- "rent", "rental", "to rent", "looking to rent", "renting" → "rent"
+- "buy", "purchase", "for sale", "looking to buy", "buying" → "buy"
+
+Extract and return as JSON:
 {
   "city": "extracted city name",
   "state": "extracted state (optional)",
@@ -117,15 +128,18 @@ Extract the following information and return as JSON:
   "features": ["array", "of", "features"]
 }
 
-If a field is not mentioned, use null for numbers or appropriate defaults.`;
+IMPORTANT: Pay special attention to property type keywords. "Apartment rooms" or "apartment room" = "apartment"`;
 
       const completion = await this.openai.chat.completions.create({
         model: config.ai.openai.model,
         messages: [
-          { role: 'system', content: 'You extract structured data from conversations. Return only valid JSON.' },
+          { 
+            role: 'system', 
+            content: 'You are an expert at extracting real estate search criteria. Focus carefully on property type keywords. Return only valid JSON.'
+          },
           { role: 'user', content: extractionPrompt }
         ],
-        temperature: 0.3, // Lower temperature for more consistent extraction
+        temperature: 0.1, // Lower temperature for more consistent extraction
       });
 
       const jsonStr = completion.choices[0].message.content || '{}';
@@ -165,19 +179,41 @@ If a field is not mentioned, use null for numbers or appropriate defaults.`;
   }
 
   private mapPropertyType(type: string): PropertyType {
-    const normalized = type?.toLowerCase();
-    switch (normalized) {
-      case 'house':
-        return PropertyType.HOUSE;
-      case 'apartment':
-        return PropertyType.APARTMENT;
-      case 'condo':
-        return PropertyType.CONDO;
-      case 'townhouse':
-        return PropertyType.TOWNHOUSE;
-      default:
-        return PropertyType.ANY;
+    const normalized = type?.toLowerCase().trim();
+    
+    // Handle apartment variations
+    if (normalized.includes('apartment') || 
+        normalized.includes('apt') || 
+        normalized.includes('rental unit') ||
+        normalized.includes('flat') ||
+        normalized.includes('studio')) {
+      return PropertyType.APARTMENT;
     }
+    
+    // Handle house variations  
+    if (normalized.includes('house') || 
+        normalized.includes('home') ||
+        normalized.includes('single family') ||
+        normalized.includes('detached') ||
+        normalized.includes('family house')) {
+      return PropertyType.HOUSE;
+    }
+    
+    // Handle condo variations
+    if (normalized.includes('condo') || 
+        normalized.includes('condominium')) {
+      return PropertyType.CONDO;
+    }
+    
+    // Handle townhouse variations
+    if (normalized.includes('townhouse') || 
+        normalized.includes('townhome') ||
+        normalized.includes('row house')) {
+      return PropertyType.TOWNHOUSE;
+    }
+    
+    // Default to any if no specific type detected
+    return PropertyType.ANY;
   }
 
   private updateMemoryPreferences(criteria: SearchCriteria): void {

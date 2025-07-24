@@ -158,12 +158,31 @@ class RealEstateCliApp {
     const spinner = ora('Searching properties...').start();
 
     try {
+      // Debug: Log the search criteria
+      console.log(chalk.gray(`\n🔍 Search criteria: ${JSON.stringify(criteria, null, 2)}`));
+      
       // Search properties from APIs
       const rawProperties = await this.apiClient.searchProperties(criteria);
       spinner.text = 'Processing results...';
 
+      // Debug: Log property types before processing
+      const propertyTypes = rawProperties.map(p => p.propertyType);
+      const propertyTypeCounts = propertyTypes.reduce((acc, type) => {
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log(chalk.gray(`📊 Raw property types: ${JSON.stringify(propertyTypeCounts)}`));
+
       // Aggregate, deduplicate, and rank
       const processedProperties = this.propertyService.aggregateAndProcess(rawProperties, criteria);
+
+      // Debug: Log property types after processing
+      const finalTypes = processedProperties.map(p => p.propertyType);
+      const finalTypeCounts = finalTypes.reduce((acc, type) => {
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log(chalk.gray(`✅ Final property types: ${JSON.stringify(finalTypeCounts)}`));
 
       spinner.succeed(`Found ${processedProperties.length} properties`);
 
