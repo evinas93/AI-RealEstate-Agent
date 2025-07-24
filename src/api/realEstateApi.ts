@@ -3,9 +3,18 @@ import { SearchCriteria, Property, PropertyType, ListingType, ApiResponse } from
 import config from '../config';
 import chalk from 'chalk';
 
+interface CacheEntry {
+  data: Property[];
+  timestamp: number;
+  criteria: string;
+}
+
 export class RealEstateApiClient {
   private apifyClient: AxiosInstance;
   private zillowClient: AxiosInstance;
+  private cache: Map<string, CacheEntry> = new Map();
+  private readonly CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+  private readonly MAX_CACHE_SIZE = 100;
 
   constructor() {
     this.apifyClient = axios.create({
@@ -27,6 +36,15 @@ export class RealEstateApiClient {
   }
 
   async searchProperties(criteria: SearchCriteria): Promise<Property[]> {
+    // Check cache first
+    const cacheKey = this.generateCacheKey(criteria);
+    const cachedResult = this.getFromCache(cacheKey);
+    
+    if (cachedResult) {
+      console.log(chalk.gray('📦 Using cached results...'));
+      return cachedResult;
+    }
+
     const results: Property[] = [];
 
     // Check if we should use mock data
@@ -36,7 +54,9 @@ export class RealEstateApiClient {
         console.log(chalk.gray('To use real data, copy .env.example to .env and add your API keys.'));
         console.log(chalk.gray('Note: URLs shown are simulated but follow real listing site patterns.\n'));
       }
-      return this.generateMockProperties(criteria, 'MockAPI');
+      const mockResults = this.generateMockProperties(criteria, 'MockAPI');
+      this.addToCache(cacheKey, mockResults, criteria);
+      return mockResults;
     }
 
     try {
@@ -69,14 +89,64 @@ export class RealEstateApiClient {
       // If no results from real APIs, fall back to mock data
       if (results.length === 0) {
         console.log(chalk.yellow('⚠️  No results from APIs, using mock data.'));
-        return this.generateMockProperties(criteria, 'MockAPI');
+        const mockResults = this.generateMockProperties(criteria, 'MockAPI');
+        this.addToCache(cacheKey, mockResults, criteria);
+        return mockResults;
       }
 
+      this.addToCache(cacheKey, results, criteria);
       return results;
     } catch (error) {
       console.error('Error searching properties:', error);
       throw new Error('Failed to search properties from APIs');
     }
+  }
+
+  private generateCacheKey(criteria: SearchCriteria): string {
+    // Create a stable cache key from search criteria
+    const keyParts = [
+      (criteria.city || '').toLowerCase(),
+      (criteria.state || '').toLowerCase(),
+      criteria.listingType,
+      criteria.propertyType,
+      criteria.minPrice?.toString() || '',
+      criteria.maxPrice?.toString() || '',
+      criteria.bedrooms?.toString() || '',
+      criteria.bathrooms?.toString() || '',
+      criteria.features.sort().join(',')
+    ];
+    
+    return keyParts.filter(part => part !== '').join('|');
+  }
+
+  private getFromCache(key: string): Property[] | null {
+    const entry = this.cache.get(key);
+    
+    if (!entry) return null;
+    
+    const now = Date.now();
+    if (now - entry.timestamp > this.CACHE_TTL) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return entry.data;
+  }
+
+  private addToCache(key: string, data: Property[], criteria: SearchCriteria): void {
+    // Clean old entries if cache is full
+    if (this.cache.size >= this.MAX_CACHE_SIZE) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
+    }
+    
+    this.cache.set(key, {
+      data: [...data], // Clone to prevent mutations
+      timestamp: Date.now(),
+      criteria: JSON.stringify(criteria)
+    });
   }
 
   private async searchApify(criteria: SearchCriteria): Promise<Property[]> {

@@ -65,11 +65,18 @@ export class DisplayUtils {
     
     console.log(`🏠 Listing Type: ${chalk.blue(listingTypeDisplay)}`);
     console.log(`💰 Price: ${chalk.green(priceDisplay)}`);
+    
+    if (property.squareFootage) {
+      const pricePerSqFt = property.price / property.squareFootage;
+      const pricePerSqFtDisplay = property.listingType === ListingType.RENT 
+        ? `$${pricePerSqFt.toFixed(2)}/sq ft/month` 
+        : `$${pricePerSqFt.toFixed(0)}/sq ft`;
+      console.log(`📐 Square Footage: ${property.squareFootage.toLocaleString()} sq ft`);
+      console.log(`💹 Price per sq ft: ${chalk.cyan(pricePerSqFtDisplay)}`);
+    }
+    
     console.log(`🛏️  Bedrooms: ${property.bedrooms}`);
     console.log(`🚿 Bathrooms: ${property.bathrooms}`);
-    if (property.squareFootage) {
-      console.log(`📐 Square Footage: ${property.squareFootage.toLocaleString()} sq ft`);
-    }
     console.log(`🏷️  Type: ${property.propertyType}`);
     
     if (property.features.length > 0) {
@@ -79,13 +86,39 @@ export class DisplayUtils {
     if (property.description) {
       console.log(`📝 Description: ${property.description}`);
     }
+
+    // Display smart recommendations
+    if (property.recommendations && property.recommendations.length > 0) {
+      console.log(chalk.green('\n🎯 Smart Recommendations:'));
+      property.recommendations.forEach(rec => {
+        console.log(chalk.green(`   ${rec}`));
+      });
+    }
+
+    // Display market insights
+    if (property.marketInsights && property.marketInsights.totalComparables > 0) {
+      console.log(chalk.cyan('\n📊 Market Analysis:'));
+      console.log(chalk.cyan(`   📈 Position: ${property.marketInsights.pricePosition}`));
+      console.log(chalk.cyan(`   📊 ${property.marketInsights.pricePercentile}th percentile (vs ${property.marketInsights.totalComparables} similar properties)`));
+      
+      const avgPriceDisplay = property.listingType === ListingType.RENT 
+        ? `$${property.marketInsights.averagePrice.toLocaleString()}/month` 
+        : `$${property.marketInsights.averagePrice.toLocaleString()}`;
+      const medianPriceDisplay = property.listingType === ListingType.RENT 
+        ? `$${property.marketInsights.medianPrice.toLocaleString()}/month` 
+        : `$${property.marketInsights.medianPrice.toLocaleString()}`;
+        
+      console.log(chalk.cyan(`   💵 Market Average: ${avgPriceDisplay}`));
+      console.log(chalk.cyan(`   📊 Market Median: ${medianPriceDisplay}`));
+    }
     
     console.log(`🔗 Listing: ${property.listingUrl}`);
     console.log(`📅 Added: ${property.dateAdded.toLocaleDateString()}`);
     console.log(`📊 Source: ${property.source}`);
     
     if (property.score) {
-      console.log(`⭐ Match Score: ${chalk.yellow(property.score + '/100')}`);
+      const scoreColor = property.score >= 80 ? chalk.green : property.score >= 60 ? chalk.yellow : chalk.red;
+      console.log(`⭐ Match Score: ${scoreColor(property.score + '/100')}`);
     }
   }
 

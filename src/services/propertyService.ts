@@ -128,34 +128,130 @@ export class PropertyService {
     // Base score
     score += 50;
 
-    // Price scoring (closer to middle of range gets higher score)
+    // Enhanced price scoring with value assessment
+    score += this.calculatePriceScore(property, criteria);
+
+    // Feature matching with weighted importance
+    score += this.calculateFeatureScore(property, criteria);
+
+    // Property size optimization
+    score += this.calculateSizeScore(property, criteria);
+
+    // Location and commute factors
+    score += this.calculateLocationScore(property, criteria);
+
+    // Recency with enhanced freshness algorithm
+    score += this.calculateFreshnessScore(property);
+
+    // Value-to-size ratio bonus
+    score += this.calculateValueScore(property);
+
+    return Math.round(Math.min(score, 100)); // Cap at 100
+  }
+
+  private calculatePriceScore(property: Property, criteria: SearchCriteria): number {
+    let priceScore = 0;
+
     if (criteria.minPrice && criteria.maxPrice) {
       const midPrice = (criteria.minPrice + criteria.maxPrice) / 2;
       const priceDistance = Math.abs(property.price - midPrice);
       const maxDistance = Math.max(midPrice - criteria.minPrice, criteria.maxPrice - midPrice);
-      score += (1 - priceDistance / maxDistance) * 20;
+      priceScore += (1 - priceDistance / maxDistance) * 25; // Increased weight
+    } else if (criteria.maxPrice) {
+      // Reward properties well under budget
+      const utilization = property.price / criteria.maxPrice;
+      if (utilization <= 0.8) priceScore += 15; // Great value
+      else if (utilization <= 0.95) priceScore += 10; // Good value
+      else priceScore += 5; // At budget
     }
 
-    // Feature matching
+    return priceScore;
+  }
+
+  private calculateFeatureScore(property: Property, criteria: SearchCriteria): number {
     const matchingFeatures = property.features.filter(feature => 
-      criteria.features.includes(feature)
+      criteria.features.some(requested => 
+        feature.toLowerCase().includes(requested.toLowerCase()) ||
+        requested.toLowerCase().includes(feature.toLowerCase())
+      )
     );
-    score += (matchingFeatures.length / Math.max(criteria.features.length, 1)) * 20;
 
-    // Bedroom/bathroom bonus
-    if (criteria.bedrooms && property.bedrooms >= criteria.bedrooms) {
-      score += 5;
-    }
-    if (criteria.bathrooms && property.bathrooms >= criteria.bathrooms) {
-      score += 5;
+    // Enhanced feature scoring with bonus for exact matches
+    const baseFeatureScore = (matchingFeatures.length / Math.max(criteria.features.length, 1)) * 15;
+    
+    // Bonus for premium features
+    const premiumFeatures = ['pool', 'gym', 'concierge', 'doorman', 'rooftop', 'garage'];
+    const premiumMatches = property.features.filter(feature => 
+      premiumFeatures.some(premium => feature.toLowerCase().includes(premium))
+    ).length;
+    
+    return baseFeatureScore + (premiumMatches * 2);
+  }
+
+  private calculateSizeScore(property: Property, criteria: SearchCriteria): number {
+    let sizeScore = 0;
+
+    // Bedroom scoring with optimal range
+    if (criteria.bedrooms) {
+      if (property.bedrooms === criteria.bedrooms) sizeScore += 8; // Perfect match
+      else if (property.bedrooms === criteria.bedrooms + 1) sizeScore += 6; // One extra
+      else if (property.bedrooms > criteria.bedrooms) sizeScore += 3; // More than needed
     }
 
-    // Recency bonus (newer listings get higher score)
+    // Bathroom scoring
+    if (criteria.bathrooms) {
+      if (property.bathrooms >= criteria.bathrooms) {
+        const bathroomBonus = Math.min((property.bathrooms - criteria.bathrooms + 1) * 3, 8);
+        sizeScore += bathroomBonus;
+      }
+    }
+
+    return sizeScore;
+  }
+
+  private calculateLocationScore(property: Property, criteria: SearchCriteria): number {
+    // Enhanced location scoring (can be expanded with real geolocation data)
+    let locationScore = 5; // Base location score
+
+    // Bonus for desirable zip codes (simplified - would use real data)
+    const zipCode = property.zipCode;
+    if (zipCode) {
+      // Premium areas get bonus (this would be data-driven in production)
+      const lastTwo = parseInt(zipCode.slice(-2));
+      if (lastTwo < 20) locationScore += 3; // Assume lower numbers are premium areas
+    }
+
+    return locationScore;
+  }
+
+  private calculateFreshnessScore(property: Property): number {
     const daysSinceAdded = (Date.now() - property.dateAdded.getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSinceAdded < 7) score += 10;
-    else if (daysSinceAdded < 30) score += 5;
+    
+    if (daysSinceAdded < 1) return 12; // Brand new
+    if (daysSinceAdded < 3) return 10; // Very fresh
+    if (daysSinceAdded < 7) return 8;  // Fresh
+    if (daysSinceAdded < 14) return 6; // Recent
+    if (daysSinceAdded < 30) return 4; // Moderately fresh
+    if (daysSinceAdded < 60) return 2; // Older
+    return 0; // Very old
+  }
 
-    return Math.round(score);
+  private calculateValueScore(property: Property): number {
+    if (!property.squareFootage || property.squareFootage === 0) return 0;
+
+    const pricePerSqFt = property.price / property.squareFootage;
+    
+    // Determine if this is a good value (simplified - would use market data)
+    const isRental = property.listingType === 'rent';
+    const avgPricePerSqFt = isRental ? 2.0 : 150; // $2/sqft for rent, $150/sqft for buy
+    
+    const valueRatio = avgPricePerSqFt / pricePerSqFt;
+    
+    if (valueRatio > 1.2) return 8; // Excellent value
+    if (valueRatio > 1.1) return 6; // Great value
+    if (valueRatio > 1.0) return 4; // Good value
+    if (valueRatio > 0.9) return 2; // Fair value
+    return 0; // Expensive
   }
 
   filterProperties(properties: Property[], criteria: SearchCriteria): Property[] {
@@ -192,7 +288,89 @@ export class PropertyService {
     // Apply diversification for better variety
     const diversified = this.diversifyResults(ranked, criteria, 15);
 
-    return diversified;
+    // Add smart recommendations
+    const withRecommendations = this.addSmartRecommendations(diversified, criteria);
+
+    return withRecommendations;
+  }
+
+  addSmartRecommendations(properties: Property[], criteria: SearchCriteria): Property[] {
+    // Add metadata for recommendations
+    return properties.map(property => ({
+      ...property,
+      recommendations: this.generateRecommendations(property, criteria),
+      marketInsights: this.generateMarketInsights(property, properties)
+    }));
+  }
+
+  private generateRecommendations(property: Property, criteria: SearchCriteria): string[] {
+    const recommendations: string[] = [];
+
+    // Value recommendations
+    if (property.squareFootage) {
+      const pricePerSqFt = property.price / property.squareFootage;
+      const isRental = property.listingType === 'rent';
+      const avgPricePerSqFt = isRental ? 2.0 : 150;
+      
+      if (pricePerSqFt < avgPricePerSqFt * 0.9) {
+        recommendations.push("💰 Excellent value - below market price per sq ft");
+      }
+    }
+
+    // Size recommendations
+    if (criteria.bedrooms && property.bedrooms > criteria.bedrooms) {
+      recommendations.push("🛏️ Extra bedroom - great for guests or home office");
+    }
+
+    // Feature recommendations
+    const premiumFeatures = property.features.filter(feature => 
+      ['pool', 'gym', 'concierge', 'doorman', 'rooftop'].some(premium => 
+        feature.toLowerCase().includes(premium)
+      )
+    );
+    if (premiumFeatures.length > 0) {
+      recommendations.push(`✨ Premium amenities: ${premiumFeatures.slice(0, 2).join(', ')}`);
+    }
+
+    // Freshness recommendations
+    const daysSinceAdded = (Date.now() - property.dateAdded.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceAdded < 3) {
+      recommendations.push("🆕 Recently listed - act fast!");
+    }
+
+    // Budget recommendations
+    if (criteria.maxPrice && property.price < criteria.maxPrice * 0.85) {
+      const savings = criteria.maxPrice - property.price;
+      const monthlySavings = property.listingType === 'rent' ? savings : Math.round(savings / 360); // 30 year mortgage
+      recommendations.push(`💵 ${monthlySavings > 0 ? `Save $${monthlySavings.toLocaleString()}${property.listingType === 'rent' ? '/month' : '/month on mortgage'}` : 'Within budget'}`);
+    }
+
+    return recommendations.slice(0, 3); // Limit to top 3 recommendations
+  }
+
+  private generateMarketInsights(property: Property, allProperties: Property[]): any {
+    const similarProperties = allProperties.filter(p => 
+      p.propertyType === property.propertyType &&
+      Math.abs(p.bedrooms - property.bedrooms) <= 1
+    );
+
+    if (similarProperties.length < 2) return {};
+
+    const prices = similarProperties.map(p => p.price);
+    const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const medianPrice = prices.sort((a, b) => a - b)[Math.floor(prices.length / 2)];
+
+    const pricePercentile = prices.filter(p => p <= property.price).length / prices.length;
+
+    return {
+      averagePrice: Math.round(avgPrice),
+      medianPrice: Math.round(medianPrice),
+      pricePercentile: Math.round(pricePercentile * 100),
+      totalComparables: similarProperties.length,
+      pricePosition: pricePercentile < 0.25 ? 'Great Deal' : 
+                    pricePercentile < 0.5 ? 'Good Value' :
+                    pricePercentile < 0.75 ? 'Market Rate' : 'Premium'
+    };
   }
 
   getSearchSummary(properties: Property[]): {
