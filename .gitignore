@@ -31,9 +31,17 @@ coverage/
 
 # Test files, evaluation reports, and search results (may contain sensitive data)
 test*.json
+test*.html
 evaluation-report-*.json
+evaluation-report-*.html
 real-estate-search-*.json
+real-estate-search-*.html
 *-test-*.json
+*-test-*.html
 *-eval-*.json
+*-eval-*.html
 *-search-*.json
+*-search-*.html
+# Timestamped test/evaluation HTML reports
+*-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9]Z.html
 evaluations/
