@@ -267,8 +267,8 @@ class RealEstateCliApp {
         properties: this.currentProperties
       };
 
-      // Add conversation if requested and format is JSON
-      if (exportOptions.includeConversation && exportOptions.format === 'json' && this.currentConversation) {
+      // Add conversation if requested and format supports it (JSON and HTML)
+      if (exportOptions.includeConversation && (exportOptions.format === 'json' || exportOptions.format === 'html') && this.currentConversation) {
         exportData.conversation = {
           messages: this.currentConversation.messages,
           preferences: this.currentConversation.extractedPreferences
@@ -281,7 +281,7 @@ class RealEstateCliApp {
       this.displayUtils.displayExportSuccess(filepath, exportOptions.format, this.currentProperties.length);
       
       if (exportOptions.includeConversation && exportOptions.format === 'csv') {
-        this.displayUtils.displayInfo('💡 Note: Conversation history is only included in JSON exports.');
+        this.displayUtils.displayInfo('💡 Note: Conversation history is only included in JSON and HTML exports.');
       }
     } catch (error) {
       this.displayUtils.displayError(`Export failed: ${error}`);

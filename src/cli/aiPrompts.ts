@@ -131,15 +131,16 @@ export class AIPrompts {
     }
   }
 
-  async getExportOptions(): Promise<{ format: 'csv' | 'json'; filename: string; includeConversation: boolean }> {
+  async getExportOptions(): Promise<{ format: 'csv' | 'json' | 'html'; filename: string; includeConversation: boolean }> {
     const answers = await inquirer.prompt([
       {
         type: 'list',
         name: 'format',
-        message: 'Select export format:',
+        message: '📁 Select export format:',
         choices: [
-          { name: 'CSV', value: 'csv' },
-          { name: 'JSON', value: 'json' }
+          { name: '📊 JSON - Beautiful structured data with emojis and insights', value: 'json' },
+          { name: '📈 CSV - Enhanced spreadsheet with emojis and calculations', value: 'csv' },
+          { name: '🌐 HTML - Stunning visual report with charts and styling', value: 'html' }
         ]
       },
       {
