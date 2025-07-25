@@ -1,15 +1,23 @@
 import OpenAI from 'openai';
-import { SearchCriteria, PropertyType, ListingType } from '../types/property';
+import { SearchCriteria, PropertyType, ListingType, Property } from '../types/property';
 import { ConversationMemory, UserPreferences } from './conversationMemory';
+import { LearningEngine, UserLearningProfile } from './learningEngine';
+import { ProactiveSuggestionEngine, ProactiveSuggestion, MarketInsight } from './proactiveSuggestionEngine';
 import config from '../config';
 import chalk from 'chalk';
 
 export class ConversationalAgent {
   private openai: OpenAI;
   private memory: ConversationMemory;
+  private learningEngine: LearningEngine;
+  private suggestionEngine: ProactiveSuggestionEngine;
+  private userId?: string;
 
-  constructor(memory: ConversationMemory) {
+  constructor(memory: ConversationMemory, userId?: string) {
     this.memory = memory;
+    this.userId = userId;
+    this.learningEngine = new LearningEngine();
+    this.suggestionEngine = new ProactiveSuggestionEngine();
     this.openai = new OpenAI({
       apiKey: config.ai.openai.apiKey,
     });
@@ -20,6 +28,8 @@ export class ConversationalAgent {
     shouldSearch: boolean; 
     searchCriteria?: SearchCriteria;
     isExiting?: boolean;
+    suggestions?: ProactiveSuggestion[];
+    marketInsights?: MarketInsight[];
   }> {
     // Add user message to memory
     this.memory.addMessage('user', input);
@@ -38,10 +48,15 @@ export class ConversationalAgent {
     const preferences = this.memory.getExtractedPreferences();
 
     try {
-      // Create prompt for OpenAI
+      // Get personalized context from learning engine
+      const personalizedContext = this.learningEngine.getPersonalizedContext(this.userId);
+      const modelOptimizations = this.learningEngine.getModelOptimizations();
+      
+      // Create enhanced prompt for OpenAI
       const systemPrompt = `You are an expert real estate assistant with deep market knowledge. Your job is to help users find the perfect property through intelligent conversation.
       
 Current user preferences: ${JSON.stringify(preferences)}
+${personalizedContext}
 
 Your tasks:
 1. Engage in natural, consultative conversation about their real estate needs
@@ -78,7 +93,10 @@ Only respond with "READY_TO_SEARCH" when you have:
 4. Basic timeline/urgency
 5. Key requirements (parking, pets, etc.)
 
-Be consultative, not just transactional. Help them make informed decisions.`;
+Be consultative, not just transactional. Help them make informed decisions.
+
+${modelOptimizations.conversationTips.length > 0 ? 
+  '\nOptimization tips based on recent performance:\n' + modelOptimizations.conversationTips.join('\n') : ''}`;
 
       const completion = await this.openai.chat.completions.create({
         model: config.ai.openai.model,
@@ -86,7 +104,8 @@ Be consultative, not just transactional. Help them make informed decisions.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: context + '\nUser: ' + input }
         ],
-        temperature: config.ai.openai.temperature,
+        temperature: modelOptimizations.temperature,
+        max_tokens: modelOptimizations.maxTokens,
       });
 
       const assistantResponse = completion.choices[0].message.content || '';
@@ -102,9 +121,16 @@ Be consultative, not just transactional. Help them make informed decisions.`;
         // Extract search criteria
         const extracted = await this.extractSearchCriteria(context + '\nUser: ' + input);
         if (extracted) {
-          searchCriteria = extracted;
+          // Enhance criteria with learned preferences
+          searchCriteria = this.learningEngine.getEnhancedCriteria(extracted, this.userId);
+          
           // Update memory with extracted preferences
           this.updateMemoryPreferences(searchCriteria);
+          
+          // Record search for learning
+          if (this.userId) {
+            this.suggestionEngine.recordSearch(this.userId, searchCriteria);
+          }
         }
       }
 
@@ -293,5 +319,81 @@ IMPORTANT: Pay special attention to property type keywords. "Apartment rooms" or
     }
 
     return summary;
+  }
+
+  /**
+   * Generate proactive suggestions and insights after a search
+   */
+  async generatePostSearchSuggestions(
+    searchCriteria: SearchCriteria,
+    searchResults: Property[]
+  ): Promise<{
+    suggestions: ProactiveSuggestion[];
+    insights: MarketInsight[];
+    followUpQuestions: string[];
+  }> {
+    const userProfile = this.userId ? await this.getUserProfile() : undefined;
+    
+    // Generate proactive suggestions
+    const suggestions = await this.suggestionEngine.generateSuggestions(
+      searchCriteria,
+      searchResults,
+      userProfile,
+      this.userId
+    );
+
+    // Generate market insights
+    const insights = this.suggestionEngine.generateMarketInsights(searchCriteria, searchResults);
+
+    // Generate follow-up questions
+    const followUpQuestions = this.suggestionEngine.generateFollowUpQuestions(
+      searchCriteria,
+      searchResults,
+      userProfile
+    );
+
+    return {
+      suggestions,
+      insights,
+      followUpQuestions
+    };
+  }
+
+  /**
+   * Learn from conversation outcomes
+   */
+  async recordLearning(
+    conversationEvaluation: any,
+    finalCriteria?: SearchCriteria,
+    userFeedback?: { selectedProperties?: Property[]; wasHelpful?: boolean }
+  ): Promise<void> {
+    const session = this.memory.getCurrentSession();
+    if (session) {
+      await this.learningEngine.learnFromConversation(
+        conversationEvaluation,
+        session,
+        finalCriteria,
+        userFeedback
+      );
+    }
+  }
+
+  /**
+   * Get user learning profile
+   */
+  private async getUserProfile(): Promise<UserLearningProfile | undefined> {
+    // In a real implementation, this would fetch from the learning engine
+    // For now, we'll simulate getting a profile
+    return undefined;
+  }
+
+  /**
+   * Get learning and suggestion stats
+   */
+  getAgentStats() {
+    return {
+      learning: this.learningEngine.getLearningStats(),
+      suggestions: this.suggestionEngine.getSuggestionStats()
+    };
   }
 } 

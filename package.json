@@ -17,7 +17,8 @@
     "eval": "ts-node scripts/run-evaluations.ts",
     "eval:demo": "ts-node src/examples/integrationExamples.ts",
     "eval:conversation": "ts-node -e \"import('./src/evals/conversationEvals').then(m => new m.ConversationEvaluator().runAutomatedEvals())\"",
-    "eval:property": "ts-node -e \"import('./src/evals/propertyEvals').then(m => new m.PropertyEvaluator().runSearchBenchmarks())\""
+    "eval:property": "ts-node -e \"import('./src/evals/propertyEvals').then(m => new m.PropertyEvaluator().runSearchBenchmarks())\"",
+    "demo:learning": "ts-node src/examples/learningDemo.ts"
   },
   "keywords": [
     "real-estate",

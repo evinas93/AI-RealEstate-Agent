@@ -66,6 +66,9 @@ class RealEstateCliApp {
       if (result.action === 'search' && result.searchCriteria) {
         await this.executeSearch(result.searchCriteria);
         
+        // Display proactive suggestions and insights
+        await this.aiPrompts.displayPostSearchSuggestions(result.searchCriteria, this.currentProperties);
+        
         // Store conversation for export
         this.currentConversation = this.aiPrompts.getConversationSession();
         
@@ -80,6 +83,10 @@ class RealEstateCliApp {
               const refineResult = await this.aiPrompts.refineConversation(result.searchCriteria);
               if (refineResult.action === 'search' && refineResult.searchCriteria) {
                 await this.executeSearch(refineResult.searchCriteria);
+                
+                // Display proactive suggestions for refined search
+                await this.aiPrompts.displayPostSearchSuggestions(refineResult.searchCriteria, this.currentProperties);
+                
                 this.currentConversation = this.aiPrompts.getConversationSession();
               }
               continue;

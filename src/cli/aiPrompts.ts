@@ -8,10 +8,12 @@ import config from '../config';
 export class AIPrompts {
   private conversationalAgent: ConversationalAgent;
   private memory: ConversationMemory;
+  private userId: string;
 
   constructor() {
     this.memory = new ConversationMemory(config.ai.conversationMemory.maxConversations);
-    this.conversationalAgent = new ConversationalAgent(this.memory);
+    this.userId = this.generateUserId();
+    this.conversationalAgent = new ConversationalAgent(this.memory, this.userId);
   }
 
   async startConversation(): Promise<{ 
@@ -185,5 +187,71 @@ export class AIPrompts {
 
   getConversationSession() {
     return this.memory.exportSession();
+  }
+
+  /**
+   * Display proactive suggestions and insights after a search
+   */
+  async displayPostSearchSuggestions(
+    searchCriteria: SearchCriteria,
+    searchResults: any[]
+  ): Promise<void> {
+    try {
+      const suggestions = await this.conversationalAgent.generatePostSearchSuggestions(
+        searchCriteria,
+        searchResults
+      );
+
+      // Display suggestions
+      if (suggestions.suggestions.length > 0) {
+        console.log(chalk.blue.bold('\n💡 Smart Suggestions:'));
+        suggestions.suggestions.forEach((suggestion, index) => {
+          const priorityIcon = suggestion.priority === 'high' ? '🔥' : 
+                              suggestion.priority === 'medium' ? '⭐' : '💭';
+          const confidenceBar = '█'.repeat(Math.round(suggestion.confidence * 5));
+          
+          console.log(chalk.yellow(`\n${index + 1}. ${priorityIcon} ${suggestion.title}`));
+          console.log(chalk.gray(`   ${suggestion.description}`));
+          console.log(chalk.gray(`   Confidence: ${confidenceBar} (${Math.round(suggestion.confidence * 100)}%)`));
+          
+          if (suggestion.actionable && suggestion.suggestedCriteria) {
+            console.log(chalk.cyan(`   💫 Try: "${suggestion.reasoning}"`));
+          }
+        });
+      }
+
+      // Display market insights
+      if (suggestions.insights.length > 0) {
+        console.log(chalk.blue.bold('\n📊 Market Insights:'));
+        suggestions.insights.forEach((insight, index) => {
+          const impactIcon = insight.impact === 'positive' ? '📈' : 
+                           insight.impact === 'negative' ? '📉' : '📊';
+          
+          console.log(chalk.cyan(`${index + 1}. ${impactIcon} ${insight.message}`));
+          console.log(chalk.gray(`   Timeframe: ${insight.timeframe} | Confidence: ${Math.round(insight.confidence * 100)}%`));
+        });
+      }
+
+      // Display follow-up questions
+      if (suggestions.followUpQuestions.length > 0) {
+        console.log(chalk.blue.bold('\n🤔 I\'d also like to know:'));
+        suggestions.followUpQuestions.forEach((question, index) => {
+          console.log(chalk.green(`${index + 1}. ${question}`));
+        });
+      }
+
+      // Show learning stats
+      const stats = this.conversationalAgent.getAgentStats();
+      if (stats.learning.totalPatterns > 0) {
+        console.log(chalk.gray(`\n🧠 Learning: ${stats.learning.totalPatterns} patterns learned, ${Math.round(stats.learning.avgPatternSuccessRate * 100)}% success rate`));
+      }
+
+    } catch (error) {
+      console.log(chalk.yellow('\n💭 Suggestions temporarily unavailable'));
+    }
+  }
+
+  private generateUserId(): string {
+    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 } 
