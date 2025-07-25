@@ -27,7 +27,7 @@ pnpm run dev
 - 💡 **Proactive Suggestions** - Smart recommendations without being asked
 - 🏠 **Intelligent Search** - Multi-source data with adaptive ranking
 - 📊 **Market Intelligence** - Real-time insights, trends, and opportunities
-- 📈 **Beautiful Exports** - Stunning HTML reports, enhanced CSV, rich JSON
+- 📈 **Interactive Exports** - HTML reports with clickable property links, enhanced CSV, rich JSON
 - ⚡ **Self-Improving System** - Automatic optimization based on performance
 - 🔍 **Comprehensive Monitoring** - Quality tracking and evaluation
 
@@ -146,7 +146,7 @@ graph TB
 #### **🎨 User Experience**
 - **`AIPrompts`**: Intelligent conversation flow management
 - **`DisplayUtils`**: Rich property presentation with insights
-- **`ExportUtils`**: Professional reports (HTML, CSV, JSON)
+- **`ExportUtils`**: Professional reports (interactive HTML, CSV, JSON)
 - **Proactive Display**: Smart suggestions and market insights
 
 ### **🔄 Learning & Adaptation Loop**
@@ -308,7 +308,7 @@ Get real-time insights into your AI agent's performance:
 ## 📸 What You'll Get
 
 ### Beautiful Exports
-- **🌐 HTML Reports** - Professional property showcases
+- **🌐 HTML Reports** - Professional showcases with clickable Zillow links
 - **📈 Enhanced CSV** - Emoji headers, calculated fields  
 - **📊 Rich JSON** - Market insights, recommendations
 

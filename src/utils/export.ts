@@ -260,6 +260,35 @@ export class ExportUtils {
           text-align: center;
       }
       
+      .zillow-link {
+          display: inline-block;
+          background: linear-gradient(135deg, #0073bb 0%, #005a9f 100%);
+          color: white;
+          padding: 0.8rem 1.5rem;
+          border-radius: 25px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.9rem;
+          margin-top: 1rem;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(0, 115, 187, 0.3);
+      }
+      
+      .zillow-link:hover {
+          background: linear-gradient(135deg, #005a9f 0%, #004080 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 115, 187, 0.4);
+          color: white;
+          text-decoration: none;
+      }
+      
+      .property-actions {
+          text-align: center;
+          margin-top: 1.5rem;
+          padding-top: 1.5rem;
+          border-top: 1px solid #eee;
+      }
+      
       .property-content {
           padding: 2rem;
       }
@@ -498,12 +527,21 @@ export class ExportUtils {
 
   private generateTopPicks(properties: any[]): string {
     const bestMatch = this.getTopProperty(properties, 'score');
+    const listingUrl = bestMatch["🔗 Links & Media"]?.["🌐 View Listing"];
+    
     return `
       <div class="top-pick">
         <h3>🥇 Best Overall Match</h3>
         <p><strong>Address:</strong> ${bestMatch["🏠 Property Details"]?.["📍 Address"] || 'N/A'}</p>
         <p><strong>Price:</strong> ${bestMatch["🏠 Property Details"]?.["💰 Price"] || 'N/A'}</p>
         <p><strong>Score:</strong> ${bestMatch["⭐ Match Information"]?.["🎯 Match Score"] || 'N/A'}</p>
+        ${listingUrl ? `
+        <div style="margin-top: 1rem;">
+                      <a href="${listingUrl}" target="_blank" rel="noopener noreferrer" class="zillow-link">
+              🏠 View Best Match Listing
+            </a>
+        </div>
+        ` : ''}
       </div>
     `;
   }
@@ -512,6 +550,7 @@ export class ExportUtils {
     const details = property["🏠 Property Details"];
     const match = property["⭐ Match Information"];
     const features = property["✨ Features & Amenities"];
+    const links = property["🔗 Links & Media"];
     
     return `
       <div class="property-card">
@@ -543,6 +582,13 @@ export class ExportUtils {
               `<span class="feature-tag">${highlight}</span>`
             ).join('') || ''}
           </div>
+          ${links?.["🌐 View Listing"] ? `
+          <div class="property-actions">
+            <a href="${links["🌐 View Listing"]}" target="_blank" rel="noopener noreferrer" class="zillow-link">
+              🏠 View Property Listing
+            </a>
+          </div>
+          ` : ''}
         </div>
       </div>
     `;
