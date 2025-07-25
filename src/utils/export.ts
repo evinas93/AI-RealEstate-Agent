@@ -1,14 +1,21 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createObjectCsvWriter } from 'csv-writer';
-import { Property, ExportOptions } from '../types/property';
+import { Property, ExportOptions, PropertyType } from '../types/property';
 
 export class ExportUtils {
+  private readonly EXPORTS_DIR = 'exports';
+
   async exportProperties(options: ExportOptions): Promise<string> {
     const { format, filename, properties } = options;
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const fullFilename = `${filename}-${timestamp}.${format}`;
-    const filepath = path.resolve(process.cwd(), fullFilename);
+    
+    // Create exports directory structure
+    const exportsPath = path.resolve(process.cwd(), this.EXPORTS_DIR);
+    await this.ensureDirectoryExists(exportsPath);
+    
+    const filepath = path.join(exportsPath, fullFilename);
 
     try {
       if (format === 'json') {
@@ -22,6 +29,16 @@ export class ExportUtils {
       return filepath;
     } catch (error) {
       throw new Error(`Failed to export to ${format}: ${error}`);
+    }
+  }
+
+  private async ensureDirectoryExists(dirPath: string): Promise<void> {
+    try {
+      await fs.access(dirPath);
+    } catch (error) {
+      // Directory doesn't exist, create it
+      await fs.mkdir(dirPath, { recursive: true });
+      console.log(`📁 Created exports directory: ${dirPath}`);
     }
   }
 
@@ -97,8 +114,7 @@ export class ExportUtils {
 
   private async exportToHtml(filepath: string, properties: Property[], options?: ExportOptions): Promise<void> {
     const htmlContent = this.generateBeautifulHtml(properties, options);
-    const htmlFilepath = filepath.replace('.html', '.html');
-    await fs.writeFile(htmlFilepath, htmlContent, 'utf-8');
+    await fs.writeFile(filepath, htmlContent, 'utf-8');
   }
 
   private beautifyProperty(property: Property): any {
@@ -112,6 +128,7 @@ export class ExportUtils {
         "📐 Square Footage": property.squareFootage ? 
           `${property.squareFootage.toLocaleString()} sq ft` : 'Not specified',
         "🏷️ Property Type": this.capitalizeFirst(property.propertyType),
+        "🔤 Raw Property Type": property.propertyType, // Store raw type for icon generation
         "📝 Description": property.description || 'No description available'
       },
       
@@ -368,8 +385,35 @@ export class ExportUtils {
   private formatPropertyPrice(property: Property): string {
     const price = this.formatCurrency(property.price);
     const suffix = property.listingType === 'rent' ? '/month' : '';
-    const emoji = property.listingType === 'rent' ? '🏠' : '💰';
+    const emoji = this.getPropertyTypeIcon(property.propertyType);
     return `${emoji} ${price}${suffix}`;
+  }
+
+  private getPropertyTypeIcon(propertyType: string | PropertyType): string {
+    // Normalize the property type to lowercase string
+    const typeStr = String(propertyType).toLowerCase();
+    
+    // Debug logging to see what property types we're getting in HTML export
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🎨 HTML Icon mapping: "${propertyType}" -> normalized: "${typeStr}"`);
+    }
+    
+    const iconMap: Record<string, string> = {
+      'apartment': '🏢',
+      'house': '🏠',
+      'condo': '🏘️',
+      'townhouse': '🏡',
+      'any': '🏠'
+    };
+    
+    const selectedIcon = iconMap[typeStr] || '🏠';
+    
+    // More debug logging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`🎨 Selected icon: ${selectedIcon} for property type: ${propertyType}`);
+    }
+    
+    return selectedIcon;
   }
 
   private formatCurrency(amount: number): string {
@@ -538,7 +582,7 @@ export class ExportUtils {
         ${listingUrl ? `
         <div style="margin-top: 1rem;">
                       <a href="${listingUrl}" target="_blank" rel="noopener noreferrer" class="zillow-link">
-              🏠 View Best Match Listing
+              ${this.getPropertyTypeIcon(bestMatch["🏠 Property Details"]?.["🔤 Raw Property Type"] || 'house')} View Best Match Listing
             </a>
         </div>
         ` : ''}
@@ -585,7 +629,7 @@ export class ExportUtils {
           ${links?.["🌐 View Listing"] ? `
           <div class="property-actions">
             <a href="${links["🌐 View Listing"]}" target="_blank" rel="noopener noreferrer" class="zillow-link">
-              🏠 View Property Listing
+              ${this.getPropertyTypeIcon(details?.["🔤 Raw Property Type"] || 'house')} View Property Listing
             </a>
           </div>
           ` : ''}

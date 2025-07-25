@@ -18,6 +18,11 @@ MAX_CONVERSATIONS=10
 # Set to false to use real API data (requires API keys below)
 USE_MOCK_DATA=true
 
+# Strict API Mode (Optional)
+# When true, disables mock data fallbacks if valid API keys are present
+# Set to true to ensure you only get real data or clear error messages
+STRICT_API_MODE=false
+
 # Apify Configuration (Optional - for real property data)
 # Get your API token from: https://console.apify.com/account/integrations
 APIFY_API_TOKEN=
@@ -49,6 +54,9 @@ MAX_RESULTS_PER_API=20
 - **AI_MODEL**: Choose between `gpt-3.5-turbo` (cheaper) or `gpt-4` (more accurate)
 - **AI_TEMPERATURE**: Controls randomness (0.0 = deterministic, 1.0 = creative)
 - **USE_MOCK_DATA**: Set to `true` to use mock data (no API calls needed)
+- **STRICT_API_MODE**: When `true`, disables mock data fallbacks if valid API keys exist
+  - Ensures you get real data or clear error messages (no confusing mock data)
+  - Recommended when you have valid API keys and want predictable behavior
 
 ## Quick Start
 
@@ -63,6 +71,14 @@ MAX_RESULTS_PER_API=20
    OPENAI_API_KEY=sk-your-key-here
    USE_MOCK_DATA=false
    APIFY_API_TOKEN=your-apify-token
+   RAPIDAPI_KEY=your-rapidapi-key
+   ```
+
+3. For strict API mode (real data only, no mock fallbacks):
+   ```bash
+   OPENAI_API_KEY=sk-your-key-here
+   USE_MOCK_DATA=false
+   STRICT_API_MODE=true
    RAPIDAPI_KEY=your-rapidapi-key
    ```
 

@@ -45,6 +45,7 @@ export interface AppConfig {
   apiTimeout: number;
   maxResultsPerApi: number;
   useMockData: boolean;
+  strictApiMode: boolean; // When true, never use mock data if valid API keys exist
 }
 
 class Config {
@@ -83,6 +84,7 @@ class Config {
       apiTimeout: parseInt(process.env.API_TIMEOUT || '30000', 10),
       maxResultsPerApi: parseInt(process.env.MAX_RESULTS_PER_API || '20', 10),
       useMockData: process.env.USE_MOCK_DATA === 'true',
+      strictApiMode: process.env.STRICT_API_MODE === 'true',
     };
 
     this.ai = {

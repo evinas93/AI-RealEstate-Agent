@@ -266,8 +266,12 @@ export class PropertyService {
       // Bathroom filter
       if (criteria.bathrooms && property.bathrooms < criteria.bathrooms) return false;
 
-      // Property type filter
-      if (criteria.propertyType !== 'any' && property.propertyType !== criteria.propertyType) {
+      // Property type filter - FIXED: Use enum comparison and add strict apartment filtering
+      if (criteria.propertyType !== PropertyType.ANY && property.propertyType !== criteria.propertyType) {
+        // Extra strict filtering for apartment searches
+        if (criteria.propertyType === PropertyType.APARTMENT && property.propertyType === PropertyType.HOUSE) {
+          console.log(`🚫 FINAL FILTER: Excluding single family house ${property.address} from apartment search`);
+        }
         return false;
       }
 

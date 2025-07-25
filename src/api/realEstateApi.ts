@@ -46,17 +46,25 @@ export class RealEstateApiClient {
     }
 
     const results: Property[] = [];
+    const hasValidApis = config.hasAnyValidApiConfig();
+    const shouldUseStrictMode = config.app.strictApiMode && hasValidApis;
 
     // Check if we should use mock data
-    if (config.app.useMockData || !config.hasAnyValidApiConfig()) {
-      if (!config.hasAnyValidApiConfig()) {
+    if (config.app.useMockData || (!hasValidApis && !shouldUseStrictMode)) {
+      if (!hasValidApis) {
         console.log(chalk.yellow('\n⚠️  No API keys configured. Using mock data.'));
         console.log(chalk.gray('To use real data, copy .env.example to .env and add your API keys.'));
         console.log(chalk.gray('Note: URLs shown are simulated but follow real listing site patterns.\n'));
+      } else {
+        console.log(chalk.blue('\n🔧 Mock data mode enabled (USE_MOCK_DATA=true)'));
       }
       const mockResults = this.generateMockProperties(criteria, 'MockAPI');
       this.addToCache(cacheKey, mockResults, criteria);
       return mockResults;
+    }
+
+    if (shouldUseStrictMode) {
+      console.log(chalk.green('\n🔒 Strict API mode enabled - using real API data only'));
     }
 
     try {
@@ -86,17 +94,25 @@ export class RealEstateApiClient {
         }
       });
 
-      // If no results from real APIs, fall back to mock data
+      // Handle no results based on strict mode
       if (results.length === 0) {
-        console.log(chalk.yellow('⚠️  No results from APIs, using mock data.'));
-        const mockResults = this.generateMockProperties(criteria, 'MockAPI');
-        this.addToCache(cacheKey, mockResults, criteria);
-        return mockResults;
+        if (shouldUseStrictMode) {
+          throw new Error('🚫 No results from APIs. Strict API mode enabled - mock data disabled. Check your API keys and network connection.');
+        } else {
+          console.log(chalk.yellow('⚠️  No results from APIs, using mock data.'));
+          const mockResults = this.generateMockProperties(criteria, 'MockAPI');
+          this.addToCache(cacheKey, mockResults, criteria);
+          return mockResults;
+        }
       }
 
       this.addToCache(cacheKey, results, criteria);
       return results;
     } catch (error) {
+      if (shouldUseStrictMode) {
+        console.error(chalk.red('🚫 API Error in strict mode - no mock fallback available:'));
+        throw error;
+      }
       console.error('Error searching properties:', error);
       throw new Error('Failed to search properties from APIs');
     }
@@ -189,6 +205,10 @@ export class RealEstateApiClient {
 
       return transformedResults;
     } catch (error) {
+      if (config.app.strictApiMode && config.hasValidApifyConfig()) {
+        console.log(chalk.red(`❌ Apify API failed in strict mode: ${error instanceof Error ? error.message : String(error)}`));
+        throw error; // Don't fall back to mock data in strict mode
+      }
       console.warn('Apify API error, falling back to mock data:', error instanceof Error ? error.message : String(error));
       return this.generateMockProperties(criteria, 'Apify');
     }
@@ -215,9 +235,19 @@ export class RealEstateApiClient {
       if (criteria.minPrice) searchParams.minPrice = criteria.minPrice;
       if (criteria.maxPrice) searchParams.maxPrice = criteria.maxPrice;
       
-      // Add property type only if it's not 'any'
-      if (criteria.propertyType !== 'any') {
-        searchParams.home_type = this.mapPropertyTypeToZillow(criteria.propertyType);
+      // ENHANCED: Add property type with strict filtering to exclude single family houses
+      if (criteria.propertyType !== PropertyType.ANY) {
+        const zillowHomeType = this.mapPropertyTypeToZillow(criteria.propertyType);
+        if (zillowHomeType) {
+          searchParams.home_type = zillowHomeType;
+        }
+        
+        // For apartment searches, explicitly exclude single family residences
+        if (criteria.propertyType === PropertyType.APARTMENT) {
+          searchParams.excludeTypes = 'Houses,SingleFamily,Townhouse';
+          // Also try different apartment-specific parameters
+          searchParams.propertyTypes = 'Apartments,Condos,Multi-family';
+        }
       }
       
       console.log(chalk.gray(`Search params: ${JSON.stringify(searchParams)}`));
@@ -229,6 +259,10 @@ export class RealEstateApiClient {
       console.log(chalk.green(`✅ Zillow API success! Found ${response.data.props?.length || 0} properties`));
       return this.transformZillowResults(response.data, criteria);
     } catch (error) {
+      if (config.app.strictApiMode && config.hasValidZillowConfig()) {
+        console.log(chalk.red(`❌ Zillow API failed in strict mode: ${error instanceof Error ? error.message : String(error)}`));
+        throw error; // Don't fall back to mock data in strict mode
+      }
       console.log(chalk.red(`❌ Zillow API failed: ${error instanceof Error ? error.message : String(error)}`));
       console.warn('Zillow API error, using mock data:', error);
       return this.generateMockProperties(criteria, 'Zillow');
@@ -264,6 +298,23 @@ export class RealEstateApiClient {
       searchQuery.filterState.baths = { min: criteria.bathrooms };
     }
 
+    // Add property type filtering - this was missing!
+    if (criteria.propertyType !== PropertyType.ANY) {
+      // Map our property types to Zillow's filter values
+      const zillowTypeMapping: Record<PropertyType, any> = {
+        [PropertyType.HOUSE]: { isSingleFamily: true },
+        [PropertyType.APARTMENT]: { isApartment: true },
+        [PropertyType.CONDO]: { isCondo: true },
+        [PropertyType.TOWNHOUSE]: { isTownhouse: true },
+        [PropertyType.ANY]: {} // No filter
+      };
+      
+      const typeFilter = zillowTypeMapping[criteria.propertyType];
+      if (typeFilter && Object.keys(typeFilter).length > 0) {
+        searchQuery.filterState = { ...searchQuery.filterState, ...typeFilter };
+      }
+    }
+
     const searchParams = new URLSearchParams();
     searchParams.append('searchQueryState', JSON.stringify(searchQuery));
     
@@ -297,14 +348,35 @@ export class RealEstateApiClient {
       bedrooms: parseInt(item.bedrooms || '0'),
       bathrooms: parseFloat(item.bathrooms || '0'),
       squareFootage: parseInt(item.squareFootage?.replace(/[^0-9]/g, '') || '0'),
-      propertyType: criteria.propertyType,
+      propertyType: this.detectPropertyTypeFromScrapedData(item, criteria.propertyType),
       description: item.description || `Property in ${criteria.city}`,
       features: item.features || [],
       imageUrls: item.images || [],
       listingUrl: item.url || item.listingUrl,
       source: 'Apify',
       dateAdded: new Date(item.dateAdded || Date.now())
-    }));
+    })).filter((property: Property) => {
+      // ENHANCED FILTERING: Apply strict property type filtering (same as Zillow)
+      if (criteria.propertyType === PropertyType.ANY) {
+        return true; // Accept all types
+      }
+      
+      const matches = property.propertyType === criteria.propertyType;
+      
+      // Additional validation for apartment searches - be extra strict
+      if (criteria.propertyType === PropertyType.APARTMENT && property.propertyType !== PropertyType.APARTMENT) {
+        console.log(chalk.red(`🚫 FILTERED: Excluding ${property.address} (detected: ${property.propertyType}) from apartment search`));
+        return false;
+      }
+      
+      if (!matches) {
+        console.log(chalk.yellow(`🚫 FILTERED: ${property.address} (detected: ${property.propertyType}) doesn't match requested: ${criteria.propertyType}`));
+      } else {
+        console.log(chalk.green(`✅ INCLUDED: ${property.address} (detected: ${property.propertyType}) matches requested: ${criteria.propertyType}`));
+      }
+      
+      return matches;
+    });
   }
 
   private transformZillowResults(data: any, criteria: SearchCriteria): Property[] {
@@ -323,14 +395,35 @@ export class RealEstateApiClient {
       bedrooms: item.bedrooms || 0,
       bathrooms: item.bathrooms || 0,
       squareFootage: item.livingArea || 0,
-      propertyType: criteria.propertyType,
+      propertyType: this.detectPropertyTypeFromScrapedData(item, criteria.propertyType),
       description: `${item.propertyType || 'Property'} in ${criteria.city}`,
       features: this.extractZillowFeatures(item),
       imageUrls: item.imgSrc ? [item.imgSrc] : [],
       listingUrl: item.detailUrl ? `https://www.zillow.com${item.detailUrl}` : `https://www.zillow.com/homedetails/${item.zpid}_zpid/`,
       source: 'Zillow',
       dateAdded: new Date()
-    }));
+    })).filter((property: Property) => {
+      // ENHANCED FILTERING: Apply strict property type filtering
+      if (criteria.propertyType === PropertyType.ANY) {
+        return true; // Accept all types
+      }
+      
+      const matches = property.propertyType === criteria.propertyType;
+      
+      // Additional validation for apartment searches - be extra strict
+      if (criteria.propertyType === PropertyType.APARTMENT && property.propertyType !== PropertyType.APARTMENT) {
+        console.log(chalk.red(`🚫 FILTERED: Excluding ${property.address} (detected: ${property.propertyType}) from apartment search`));
+        return false;
+      }
+      
+      if (!matches) {
+        console.log(chalk.yellow(`🚫 FILTERED: ${property.address} (detected: ${property.propertyType}) doesn't match requested: ${criteria.propertyType}`));
+      } else {
+        console.log(chalk.green(`✅ INCLUDED: ${property.address} (detected: ${property.propertyType}) matches requested: ${criteria.propertyType}`));
+      }
+      
+      return matches;
+    });
   }
 
   private extractZillowFeatures(item: any): string[] {
@@ -398,12 +491,40 @@ export class RealEstateApiClient {
       const bedrooms = Math.max(criteria.bedrooms || config.bedrooms, config.bedrooms);
       const bathrooms = Math.max(criteria.bathrooms || config.bathrooms, config.bathrooms);
 
-      // Determine property type - respect the criteria better
-      let propertyType = criteria.propertyType;
+      // Determine property type - FIX: Be more realistic about actual API behavior
+      let propertyType: PropertyType;
+      let actualZillowType: string; // Simulate what Zillow would actually return
+      
       if (criteria.propertyType === PropertyType.ANY) {
         propertyType = this.getRandomPropertyType();
+        actualZillowType = this.propertyTypeToZillowMockType(propertyType);
+      } else {
+        // FIXED: Real APIs generally DO return what you ask for when filtered properly
+        // Only include a small percentage of "noise" to simulate API imperfection
+        const shouldMatchRequest = Math.random() > 0.05; // 95% match requested type (much more realistic)
+        
+        if (shouldMatchRequest) {
+          propertyType = criteria.propertyType;
+          actualZillowType = this.propertyTypeToZillowMockType(propertyType);
+        } else {
+          // Simulate very occasional API "noise" - but prefer similar types over completely different ones
+          let randomType: PropertyType;
+          if (criteria.propertyType === PropertyType.APARTMENT) {
+            // If looking for apartments, the "noise" should be condos (similar), not houses
+            randomType = Math.random() > 0.5 ? PropertyType.CONDO : PropertyType.TOWNHOUSE;
+          } else if (criteria.propertyType === PropertyType.HOUSE) {
+            // If looking for houses, noise could be townhouse
+            randomType = PropertyType.TOWNHOUSE;
+          } else {
+            randomType = PropertyType.HOUSE; // Default fallback
+          }
+          
+          propertyType = randomType;
+          actualZillowType = this.propertyTypeToZillowMockType(randomType);
+          console.log(chalk.yellow(`🔀 MOCK: Simulating API noise - ${criteria.propertyType} search returned ${randomType}`));
+        }
       }
-
+      
       // Generate diverse feature sets
       const baseFeatures = [...new Set([...criteria.features, ...featureSets[config.featureSet]])];
       let features = baseFeatures;
@@ -432,6 +553,26 @@ export class RealEstateApiClient {
         address = `${streetNumber} ${streetName}`;
       }
       
+      // Apply the same property type detection logic as real data
+      const mockItem = {
+        propertyType: actualZillowType,
+        address: address
+      };
+      
+      const detectedType = this.detectPropertyTypeFromScrapedData(mockItem, criteria.propertyType);
+      
+      // Only include this property if it matches the requested type (same filtering as real API)
+      if (criteria.propertyType !== PropertyType.ANY && detectedType !== criteria.propertyType) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(chalk.yellow(`🚫 MOCK: Filtered out ${address} (detected: ${detectedType}, zillow said: "${actualZillowType}") - requested: ${criteria.propertyType}`));
+        }
+        continue; // Skip this property - it doesn't match what user requested
+      }
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(chalk.green(`✅ MOCK: Including ${address} (detected: ${detectedType}, zillow said: "${actualZillowType}") - matches requested: ${criteria.propertyType}`));
+      }
+      
       // Generate a realistic property ID
       const propertyId = Math.random().toString(36).substring(2, 15);
       
@@ -455,8 +596,8 @@ export class RealEstateApiClient {
         bedrooms,
         bathrooms,
         squareFootage,
-        propertyType,
-        description: `Beautiful ${propertyType} in ${criteria.city}${propertyType === PropertyType.APARTMENT ? ' with modern amenities' : ' with spacious rooms'}`,
+        propertyType: detectedType,
+        description: `Beautiful ${detectedType} in ${criteria.city}${detectedType === PropertyType.APARTMENT ? ' with modern amenities' : ' with spacious rooms'}`,
         features,
         imageUrls: [
           `https://photos.zillowstatic.com/fp/${propertyId}-cc_ft_768.jpg`,
@@ -484,6 +625,59 @@ export class RealEstateApiClient {
   private getRandomListingType(): ListingType {
     const types = [ListingType.RENT, ListingType.BUY];
     return types[Math.floor(Math.random() * types.length)];
+  }
+
+  private detectPropertyTypeFromScrapedData(item: any, requestedType: PropertyType): PropertyType {
+    // Try to detect property type from scraped data
+    // Look for common indicators in the scraped data
+    
+    // Check if there's explicit property type information
+    if (item.home_type || item.propertyType || item.type) {
+      const typeStr = (item.home_type || item.propertyType || item.type).toLowerCase();
+      
+      if (typeStr.includes('apartment') || typeStr.includes('apt') || typeStr.includes('multi-family') || typeStr.includes('multifamily')) {
+        return PropertyType.APARTMENT;
+      } else if (typeStr.includes('house') || 
+                 typeStr.includes('single family') || 
+                 typeStr.includes('single-family') ||
+                 typeStr.includes('single_family') ||  // Handle Zillow's SINGLE_FAMILY format
+                 typeStr.includes('single family residence') ||
+                 typeStr.includes('residential') ||
+                 typeStr.includes('sfr')) {
+        return PropertyType.HOUSE;
+      } else if (typeStr.includes('condo') || typeStr.includes('condominium')) {
+        return PropertyType.CONDO;
+      } else if (typeStr.includes('townhouse') || typeStr.includes('townhome')) {
+        return PropertyType.TOWNHOUSE;
+      }
+    }
+
+    // Try to infer from address (apartments often have unit numbers)
+    const address = item.address || item.street || '';
+    if (address.toLowerCase().includes('unit ') || 
+        address.toLowerCase().includes('apt ') || 
+        address.toLowerCase().includes('#')) {
+      return PropertyType.APARTMENT;
+    }
+
+    // CRITICAL CHANGE: If user requested a specific property type and we can't confidently detect it,
+    // mark as HOUSE (the most common unspecified type) so it gets filtered out during apartment searches
+    if (requestedType !== PropertyType.ANY) {
+      // For apartment searches, be very strict - if we can't clearly identify it as an apartment, 
+      // assume it's NOT an apartment and mark as house so it gets filtered out
+      if (requestedType === PropertyType.APARTMENT) {
+        // If no clear apartment indicators found, default to HOUSE to exclude it
+        console.log(chalk.yellow(`🚫 Property type unclear for ${address} - defaulting to HOUSE for apartment search exclusion`));
+        return PropertyType.HOUSE;
+      }
+      
+      // For other specific searches, also be conservative
+      console.log(chalk.yellow(`🚫 Property type unclear for ${address} - defaulting to HOUSE`));
+      return PropertyType.HOUSE;
+    }
+
+    // Only if searching for ANY type, return the requested type as fallback
+    return requestedType;
   }
 
   private getRandomFeatures(requestedFeatures: string[]): string[] {
@@ -539,4 +733,18 @@ export class RealEstateApiClient {
     
     return null;
   }
+
+  private propertyTypeToZillowMockType(type: PropertyType): string {
+    const mapping: Record<PropertyType, string[]> = {
+      [PropertyType.HOUSE]: ['Houses', 'Single family residence', 'single-family', 'residential'],
+      [PropertyType.APARTMENT]: ['Apartments', 'apartment', 'apt'],
+      [PropertyType.CONDO]: ['Condos', 'condominium', 'condo'],
+      [PropertyType.TOWNHOUSE]: ['Townhouses', 'townhome', 'townhouse'],
+      [PropertyType.ANY]: ['']
+    };
+    
+    const options = mapping[type];
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
 }
